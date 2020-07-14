@@ -1,0 +1,55 @@
+sample_id	barcode_sequence	forward_linker_primer_sequence	reverse_primer_sequence	sample_type	nucleic_acid_type	sampling_site	year_sampled	month_sampled	day_sampled	depth_fluid_intake_mbct	notes	sampling_method	upper_packer_inflated	upper_packer_depth_mbct	lower_packer_inflated	lower_packer_depth_mbct	well_depth_mbgl	casing_extent_mbct	casing_height_magl	screened_interval_mbct	depth_to_water_mbct
+NTC_1	GCCCTTCCCGTG	AA	NA	PCR control	DNA	NA	2018	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+NTC_10	CGTTTATCCGTT	AA	NA	PCR control	DNA	NA	2018	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+NTC_11	TAACCACCAACG	AA	NA	PCR control	DNA	NA	2018	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+NTC_12	TAGCGACCTCAC	AA	NA	PCR control	DNA	NA	2018	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+NTC_13	TAGGCATGCTTG	AA	NA	PCR control	DNA	NA	2018	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+NTC_14	GACCACTGCTGT	AA	NA	PCR control	DNA	NA	2018	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+NTC_15	ATCCATGAGCGT	AA	NA	PCR control	DNA	NA	2018	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+NTC_16	AATCATTTGTAA	AA	NA	PCR control	DNA	NA	2018	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+NTC_17	GAGGCAAACGCC	AA	NA	PCR control	DNA	NA	2018	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+NTC_18	TATAATCCGAGG	AA	NA	PCR control	DNA	NA	2018	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+NTC_19	GTGACTAGTGAT	AA	NA	PCR control	DNA	NA	2018	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+NTC_2	CACAGTTGAAGT	AA	NA	PCR control	DNA	NA	2018	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+NTC_20	GAAGGAAAGTAG	AA	NA	PCR control	DNA	NA	2018	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+NTC_3	GCAAAGGCCCGC	AA	NA	PCR control	DNA	NA	2018	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+NTC_4	TGAACCCTATGG	AA	NA	PCR control	DNA	NA	2018	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+NTC_5	CTCCCACTAGAG	AA	NA	PCR control	DNA	NA	2018	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+NTC_6	AATAAGCAATAG	AA	NA	PCR control	DNA	NA	2018	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+NTC_7	AATAGATGCTGA	AA	NA	PCR control	DNA	NA	2018	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+NTC_8	TATGGGTAGCTA	AA	NA	PCR control	DNA	NA	2018	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+NTC_9	AACGCTTCTTAT	AA	NA	PCR control	DNA	NA	2018	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+BA1A100_10_2J	AGTATATGTTTC	AA	NA	groundwater	DNA	BA1A	2018	2	8	NA	NA	packer - Solexperts	TRUE	100	FALSE	NA	400.0	22.0	1.0	open below casing	13.47
+BA1A100_22_2D	GGCTCGTCGGAG	AA	NA	groundwater	DNA	BA1A	2018	2	8	NA	NA	packer - Solexperts	TRUE	100	FALSE	NA	400.0	22.0	1.0	open below casing	13.47
+BA1A100_45_2C	GACATCTGACAC	AA	NA	groundwater	DNA	BA1A	2018	2	8	NA	NA	packer - Solexperts	TRUE	100	FALSE	NA	400.0	22.0	1.0	open below casing	13.47
+BA1A5566_10_1D	ATGTTAGGGAAT	AA	NA	groundwater	DNA	BA1A	2018	2	2	66	NA	packer - Solexperts	TRUE	55	TRUE	66	400.0	22.0	1.0	open below casing	13.47
+BA1A5566_22_1C	AAGTGGCTATCC	AA	NA	groundwater	DNA	BA1A	2018	2	2	66	NA	packer - Solexperts	TRUE	55	TRUE	66	400.0	22.0	1.0	open below casing	13.47
+BA1A5566_45_1J	GTCGTTACCCGC	AA	NA	groundwater	DNA	BA1A	2018	2	2	66	NA	packer - Solexperts	TRUE	55	TRUE	66	400.0	22.0	1.0	open below casing	13.47
+CM2A_10_9C	ATTTGGCTCTTA	AA	NA	groundwater	DNA	CM2A	2018	2	9	75	NA	open borehole pumping - Grundfos submersible	NA	NA	NA	NA	400.0	23.7	1.0	open below casing	13.4
+CM2A_22_9J	CGCGTCAAACTA	AA	NA	groundwater	DNA	CM2A	2018	2	9	75	NA	open borehole pumping - Grundfos submersible	NA	NA	NA	NA	400.0	23.7	1.0	open below casing	13.4
+CM2A_45_9D	ATGTTCCTCATC	AA	NA	groundwater	DNA	CM2A	2018	2	9	75	NA	open borehole pumping - Grundfos submersible	NA	NA	NA	NA	400.0	23.7	1.0	open below casing	13.4
+NSHQ14_10_7D	CGGTCAATTGAC	AA	NA	groundwater	DNA	NSHQ14	2018	2	6	85	NA	open borehole pumping - Grundfos submersible	NA	NA	NA	NA	304.0	5.8	1.0	open below casing	9.2
+NSHQ14_22_7C	TCCGCTGCTGAC	AA	NA	groundwater	DNA	NSHQ14	2018	2	6	85	NA	open borehole pumping - Grundfos submersible	NA	NA	NA	NA	304.0	5.8	1.0	open below casing	9.2
+NSHQ14_45_7J	TGCGCGCCTTCC	AA	NA	groundwater	DNA	NSHQ14	2018	2	6	85	NA	open borehole pumping - Grundfos submersible	NA	NA	NA	NA	304.0	5.8	1.0	open below casing	9.2
+NSHQ4_S_11D	TACTGAGCCTCG	AA	NA	groundwater	DNA	NSHQ04	2018	2	3	8	NA	"open borehole pumping - Typhoon  submersible, Proactive Env. Products"	NA	NA	NA	NA	304.0	5.8	1.0	open below casing	4.7
+OM18_BC	CTTCCAACTCAT	AA	NA	extraction control	DNA	NA	2018	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+OM18_BD	GGTGCAGACAGA	AA	NA	extraction control	DNA	NA	2018	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+OM18_BJ	GATCCGGCAGGA	AA	NA	extraction control	DNA	NA	2018	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+WAB103_10_10D	TCCGTGGTATAG	AA	NA	groundwater	DNA	WAB103	2018	2	9	70	NA	open borehole pumping - Grundfos submersible	NA	NA	NA	NA	101.0	101.0	1.0	90-98	15
+WAB103_22_10C	GTTGGTTGGCAT	AA	NA	groundwater	DNA	WAB103	2018	2	9	70	NA	open borehole pumping - Grundfos submersible	NA	NA	NA	NA	101.0	101.0	1.0	90-98	15
+WAB103_45_10J	AACGGGCGACGT	AA	NA	groundwater	DNA	WAB103	2018	2	9	70	NA	open borehole pumping - Grundfos submersible	NA	NA	NA	NA	101.0	101.0	1.0	90-98	15
+WAB104_10_5J	ACATGGGCGGAA	AA	NA	groundwater	DNA	WAB104	2018	2	5	85	NA	open borehole pumping - Grundfos submersible	NA	NA	NA	NA	120.4	120.4	1.0	100.8-104	40
+WAB104_22_5D	CTGCGGATATAC	AA	NA	groundwater	DNA	WAB104	2018	2	5	85	NA	open borehole pumping - Grundfos submersible	NA	NA	NA	NA	120.4	120.4	1.0	100.8-104	40
+WAB104_45_5C	GTGAGGGCAAGT	AA	NA	groundwater	DNA	WAB104	2018	2	5	85	NA	open borehole pumping - Grundfos submersible	NA	NA	NA	NA	120.4	120.4	1.0	100.8-104	40
+WAB105_10_6C	ATATTGGCAGCC	AA	NA	groundwater	DNA	WAB105	2018	2	5	60	NA	open borehole pumping - Grundfos submersible	NA	NA	NA	NA	120.5	120.5	1.0	110-117	16.5
+WAB105_22_6J	TCATCCGTCGGC	AA	NA	groundwater	DNA	WAB105	2018	2	5	60	NA	open borehole pumping - Grundfos submersible	NA	NA	NA	NA	120.5	120.5	1.0	110-117	16.5
+WAB105_45_6D	GGCTTCGGAGCG	AA	NA	groundwater	DNA	WAB105	2018	2	5	60	NA	open borehole pumping - Grundfos submersible	NA	NA	NA	NA	120.5	120.5	1.0	110-117	16.5
+WAB188_10_4D	ACTAGTTGGACC	AA	NA	groundwater	DNA	WAB188	2018	2	8	50	NA	open borehole pumping - Grundfos submersible	NA	NA	NA	NA	78.0	78.0	1.0	34.5-51	9.5
+WAB188_22_4C	CGCAAGCCCGCG	AA	NA	groundwater	DNA	WAB188	2018	2	8	50	NA	open borehole pumping - Grundfos submersible	NA	NA	NA	NA	78.0	78.0	1.0	34.5-51	9.5
+WAB188_45_4J	AGAGCGGAACAA	AA	NA	groundwater	DNA	WAB188	2018	2	8	50	NA	open borehole pumping - Grundfos submersible	NA	NA	NA	NA	78.0	78.0	1.0	34.5-51	9.5
+WAB55_10_8J	GCGCACACCTTC	AA	NA	groundwater	DNA	WAB55	2018	2	7	50	NA	open borehole pumping - Grundfos submersible	NA	NA	NA	NA	102.0	102.0	1.0	8-97	7.5
+WAB55_22_8D	CACGAAAGCAGG	AA	NA	groundwater	DNA	WAB55	2018	2	7	50	NA	open borehole pumping - Grundfos submersible	NA	NA	NA	NA	102.0	102.0	1.0	8-97	7.5
+WAB55_45_8C	CGTGGCTTTCCG	AA	NA	groundwater	DNA	WAB55	2018	2	7	50	NA	open borehole pumping - Grundfos submersible	NA	NA	NA	NA	102.0	102.0	1.0	8-97	7.5
+WAB71_10_3C	AATTTCCTAACA	AA	NA	groundwater	DNA	WAB71	2018	2	3	70	NA	bailer / open borehole pumping	NA	NA	NA	NA	136.5	136.5	1.0	128-131	8.3
+WAB71_22_3J	ATAAACGGACAT	AA	NA	groundwater	DNA	WAB71	2018	2	3	70	NA	bailer / open borehole pumping	NA	NA	NA	NA	136.5	136.5	1.0	128-131	8.3
+WAB71_45_3D	GCTAGTTATGGA	AA	NA	groundwater	DNA	WAB71	2018	2	3	70	NA	bailer / open borehole pumping	NA	NA	NA	NA	136.5	136.5	1.0	128-131	8.3

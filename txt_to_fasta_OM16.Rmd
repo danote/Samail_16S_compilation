@@ -1,0 +1,32 @@
+---
+title: "txt_to_fasta"
+author: "Daniel Nothaft"
+date: "6/4/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+```
+
+```{r read-csv}
+Mapping <- read_delim("/Users/melo.d/Desktop/Research/Oman_fieldwork/Samail_16S_compilation_supporting_files/2016/Oman_2016_mapping_file_noWDA1617.txt",  delim = "\t")
+```
+
+```{r}
+Mapping 
+```
+```{r}
+Mapping_edit <- Mapping %>% mutate(barcode_anchored_5_prime = paste0("^", BarcodeSequence))
+Mapping_edit <- Mapping_edit  %>% mutate(sample_id = paste0(">", `#SampleID`))
+Mapping_edit  <- Mapping_edit  %>% mutate(fasta = paste0(sample_id, "\n", barcode_anchored_5_prime))
+Mapping_edit  <- Mapping_edit  %>% select(fasta)
+Mapping_edit_char <- Mapping_edit  %>% as_vector()
+```
+
+```{r}
+Mapping_edit
+```
+```{r}
+Mapping_edit %>% write.table(file = "/Users/melo.d/Desktop/Research/Oman_fieldwork/Samail_16S_compilation_supporting_files/2016/barcodes_OM16_anchored_5_prime.fasta", col.names = FALSE, row.names = FALSE, sep = "", quote = FALSE)
+```

@@ -1,6 +1,6 @@
 ---
-title: "Demultipexing and adapter trimming of 16S rRNA gene sequences of DNA from Oman samples collected in 2014"
-subtitle: "Source file: OM14_seq_prep.Rmd"
+title: "Demultipexing and adapter trimming of 16S rRNA gene sequences of DNA from Oman samples collected in 2016"
+subtitle: "Source file: OM16_seq_prep.Rmd"
 author: "Daniel Nothaft"
 date: "`r format(Sys.Date(), '%d %b %Y')`"
 output:
@@ -59,7 +59,7 @@ for organizational purposes.
 
 ````{r set-project-dir}
 # Set up names of sub directories to stay organized
-preprocess_path <- file.path(project_path_OM14, "01_preprocess")
+preprocess_path <- file.path(project_path_OM16, "01_preprocess")
     demultiplex_path <- file.path(preprocess_path, "demultiplexed")
       demultiplex_assigned_path <- file.path(demultiplex_path, "assigned")
       demultiplex_unassigned_path <- file.path(demultiplex_path, "unassigned")
@@ -73,6 +73,7 @@ Demultiplexing splits your reads out into separate files based on the barcodes a
 
 ```{r create-dir-demux}
 # Create directory to hold the output from cutadapt
+if (!dir.exists(project_path_OM16)) dir.create(project_path_OM16)
 if (!dir.exists(preprocess_path)) dir.create(preprocess_path)
 if (!dir.exists(demultiplex_path)) dir.create(demultiplex_path)
 if (!dir.exists(demultiplex_assigned_path)) dir.create(demultiplex_assigned_path)
@@ -80,18 +81,27 @@ if (!dir.exists(demultiplex_unassigned_path)) dir.create(demultiplex_unassigned_
 ```
 
 ```{r demux}
-# 2014 barcode length is 12 bases. At error rate of 10% (cutadapt default), there is 1 allowed error.
+# 2016 barcode length is 12 bases. At error rate of 10% (cutadapt default), there is 1 allowed error.
 error_rate_cutadapt <- 0.1
 
 # minimum length to output reads for cutadapt
 minimum_length_cutadapt_1 <- 50
 
-flags_cutadapt_1 <- paste("-e", error_rate_cutadapt, "--no-indels", "-m", minimum_length_cutadapt_1, "-g", paste0("file:", barcode_path_OM14), "-o", file.path(demultiplex_assigned_path, "{name}_R1.fastq.gz"), "-p", file.path(demultiplex_assigned_path, "{name}_R2.fastq.gz"), "--untrimmed-output", file.path(demultiplex_unassigned_path, "unassigned_R1.fastq.gz"), "--untrimmed-paired-output", file.path(demultiplex_unassigned_path, "unassigned_R2.fastq.gz"), R1_path_OM14, R2_path_OM14)
+# minimum overlap for "adapter" (barcode) to be detected by cutadapt
+minimum_overlap_cutadapt_1 <- 6
 
+# note: using anchored 5 prime barcodes
+
+# create calls to cutadapt
+flags_cutadapt_1 <- paste("-e", error_rate_cutadapt, "--no-indels", "-m", minimum_length_cutadapt_1, "--overlap", minimum_overlap_cutadapt_1, "-g",  paste0("file:", barcode_path_OM16), "-o", file.path(demultiplex_assigned_path, "{name}_R1.fastq.gz"), "-p", file.path(demultiplex_assigned_path, "{name}_R2.fastq.gz"), "--untrimmed-output", file.path(demultiplex_unassigned_path, "unassigned_R1.fastq.gz"), "--untrimmed-paired-output", file.path(demultiplex_unassigned_path, "unassigned_R2.fastq.gz"), R1_path_OM16, R2_path_OM16)
+
+# run cutdapt and save messages
 cutadapt_messages_1 <- system2(cutadapt_path, args = flags_cutadapt_1, stdout = TRUE, stderr = TRUE)
 
+# print messages
 cutadapt_messages_1 %>% paste(collapse = '\n') %>% cat()
 ```
+
 ```{r list-demux-files}
 # Look at output of demultiplexing
 list.files(demultiplex_path)

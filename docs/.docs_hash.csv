@@ -1,3 +1,2 @@
 type,source_file,source_copy,source_file_hash,doc_file,last_success,last_fail
-RMarkdown,example.Rmd,docs/rmarkdown/example.Rmd,01a53dccf83e6483de2310a941c223bf,docs/rmarkdown/example.html,2020-02-17 00:40:27 MST,NA
-RMarkdown,OM18_seq_prep.Rmd,docs/rmarkdown/OM18_seq_prep.Rmd,8db9831b35ee26a6adbdec64b6d27d74,docs/rmarkdown/OM18_seq_prep.html,2020-06-26 19:02:12 MDT,NA
+RMarkdown,OM19_taxa_assignment.Rmd,docs/rmarkdown/OM19_taxa_assignment.Rmd,45c463f34e1d784d67f529e2325ac595,docs/rmarkdown/OM19_taxa_assignment.html,2020-07-15 16:53:37 MDT,NA

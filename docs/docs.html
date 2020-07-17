@@ -1281,7 +1281,7 @@ window.initializeCodeFolding = function(show) {
   var currentIndex = 1;
 
   // select all R code blocks
-  var rCodeBlocks = $('pre.r, pre.python, pre.bash, pre.sql, pre.cpp, pre.stan, pre.julia');
+  var rCodeBlocks = $('pre.r, pre.python, pre.bash, pre.sql, pre.cpp, pre.stan, pre.julia, pre.foldable');
   rCodeBlocks.each(function() {
 
     // create a collapsable div to wrap the code in
@@ -1590,7 +1590,8 @@ div.tocify {
 rmd_files &lt;- tibble(
   type = &quot;RMarkdown&quot;, 
   target_folder = rmd_docs_folder,
-  source_file = &quot;OM19_taxa_assignment.Rmd&quot;
+  source_file = c(&quot;OM17_taxa_assignment.Rmd&quot;)
+  # , &quot;OM17_dada2_ASV_table_generation.Rmd&quot;, &quot;OM17_taxa_assignment.Rmd&quot;, &quot;OM19_dada2_ASV_table_generation.Rmd&quot;)
   # source_file = list.files(
   #   path = &quot;.&quot;, 
   #   pattern = sprintf(&quot;(%s)$&quot;, paste(rmd_ext, collapse = &quot;|&quot;)))
@@ -1654,6 +1655,16 @@ docs_files &lt;-
 # file info
 docs_files %&gt;% select(-target_folder) %&gt;% knitr::kable()</code></pre>
 <table>
+<colgroup>
+<col width="5%"></col>
+<col width="13%"></col>
+<col width="22%"></col>
+<col width="18%"></col>
+<col width="22%"></col>
+<col width="7%"></col>
+<col width="5%"></col>
+<col width="4%"></col>
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">type</th>
@@ -1669,10 +1680,10 @@ docs_files %&gt;% select(-target_folder) %&gt;% knitr::kable()</code></pre>
 <tbody>
 <tr class="odd">
 <td align="left">RMarkdown</td>
-<td align="left">OM19_taxa_assignment.Rmd</td>
-<td align="left">docs/rmarkdown/OM19_taxa_assignment.Rmd</td>
-<td align="left">45c463f34e1d784d67f529e2325ac595</td>
-<td align="left">docs/rmarkdown/OM19_taxa_assignment.html</td>
+<td align="left">OM17_taxa_assignment.Rmd</td>
+<td align="left">docs/rmarkdown/OM17_taxa_assignment.Rmd</td>
+<td align="left">3a07008aaca18ab095a3ae268d5864cd</td>
+<td align="left">docs/rmarkdown/OM17_taxa_assignment.html</td>
 <td align="left">NA</td>
 <td align="left">NA</td>
 <td align="left">TRUE</td>
@@ -1764,11 +1775,11 @@ rendered_doc_files &lt;- docs_files %&gt;%
     render_file
   ))</code></pre>
 <h1>
-OM19_taxa_assignment.Rmd (OK)
+OM17_taxa_assignment.Rmd (OK)
 </h1>
 <pre><code>
 
-processing file: OM19_taxa_assignment.Rmd
+processing file: OM17_taxa_assignment.Rmd
 
   |                                                                            
   |                                                                      |   0%
@@ -1826,11 +1837,11 @@ label: inspect-taxa-assignments
   |......................................................................| 100%
 label: write-taxtab
 
-output file: OM19_taxa_assignment.knit.md
+output file: OM17_taxa_assignment.knit.md
 
-/Applications/RStudio.app/Contents/MacOS/pandoc/pandoc +RTS -K512m -RTS OM19_taxa_assignment.utf8.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output docs/rmarkdown/OM19_taxa_assignment.html --email-obfuscation none --self-contained --standalone --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /Library/Frameworks/R.framework/Versions/4.0/Resources/library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --number-sections --css stylesheet.css --variable &#39;theme:bootstrap&#39; --include-in-header /var/folders/pw/9fk_chms0jl85nfldy5rgfyc0000gn/T//RtmpZrdsPw/rmarkdown-stred54fb54438.html --mathjax --variable &#39;mathjax-url:https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML&#39; --lua-filter /Library/Frameworks/R.framework/Versions/4.0/Resources/library/rmarkdown/rmd/lua/pagebreak.lua --lua-filter /Library/Frameworks/R.framework/Versions/4.0/Resources/library/rmarkdown/rmd/lua/latex-div.lua --variable code_folding=show --variable code_menu=1 
+/Applications/RStudio.app/Contents/MacOS/pandoc/pandoc +RTS -K512m -RTS OM17_taxa_assignment.utf8.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output docs/rmarkdown/OM17_taxa_assignment.html --email-obfuscation none --self-contained --standalone --section-divs --table-of-contents --toc-depth 3 --variable toc_float=1 --variable toc_selectors=h1,h2,h3 --variable toc_collapsed=1 --variable toc_smooth_scroll=1 --variable toc_print=1 --template /Library/Frameworks/R.framework/Versions/4.0/Resources/library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --number-sections --css stylesheet.css --variable &#39;theme:bootstrap&#39; --include-in-header /var/folders/pw/9fk_chms0jl85nfldy5rgfyc0000gn/T//Rtmpzkjq2V/rmarkdown-str165f2688ef787.html --mathjax --variable &#39;mathjax-url:https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML&#39; --lua-filter /Library/Frameworks/R.framework/Versions/4.0/Resources/library/rmarkdown/rmd/lua/pagebreak.lua --lua-filter /Library/Frameworks/R.framework/Versions/4.0/Resources/library/rmarkdown/rmd/lua/latex-div.lua --variable code_folding=show --variable code_menu=1 
 
-Output created: docs/rmarkdown/OM19_taxa_assignment.html</code></pre>
+Output created: docs/rmarkdown/OM17_taxa_assignment.html</code></pre>
 </div>
 <div id="summary" class="section level1">
 <h1>summary</h1>
@@ -1848,6 +1859,17 @@ Output created: docs/rmarkdown/OM19_taxa_assignment.html</code></pre>
 write_csv(select(summary, -generate, -success), path = hash_file)
 summary %&gt;% knitr::kable()</code></pre>
 <table>
+<colgroup>
+<col width="5%"></col>
+<col width="12%"></col>
+<col width="20%"></col>
+<col width="16%"></col>
+<col width="20%"></col>
+<col width="12%"></col>
+<col width="5%"></col>
+<col width="4%"></col>
+<col width="4%"></col>
+</colgroup>
 <thead>
 <tr class="header">
 <th align="left">type</th>
@@ -1864,11 +1886,11 @@ summary %&gt;% knitr::kable()</code></pre>
 <tbody>
 <tr class="odd">
 <td align="left">RMarkdown</td>
-<td align="left">OM19_taxa_assignment.Rmd</td>
-<td align="left">docs/rmarkdown/OM19_taxa_assignment.Rmd</td>
-<td align="left">45c463f34e1d784d67f529e2325ac595</td>
-<td align="left">docs/rmarkdown/OM19_taxa_assignment.html</td>
-<td align="left">2020-07-15 16:53:37 MDT</td>
+<td align="left">OM17_taxa_assignment.Rmd</td>
+<td align="left">docs/rmarkdown/OM17_taxa_assignment.Rmd</td>
+<td align="left">3a07008aaca18ab095a3ae268d5864cd</td>
+<td align="left">docs/rmarkdown/OM17_taxa_assignment.html</td>
+<td align="left">2020-07-16 16:21:17 MDT</td>
 <td align="left">NA</td>
 <td align="left">TRUE</td>
 <td align="left">TRUE</td>

@@ -1,0 +1,444 @@
+---
+---
+---
+title: "DADA2 ASV table generation from 16S rRNA gene sequences of DNA from Oman samples collected in 2019"
+subtitle: "Source file: OM19_ASV_table_generation.Rmd"
+author: "Daniel Nothaft"
+date: "`r format(Sys.Date(), '%d %b %Y')`"
+output:
+  html_document: 
+    df_print: paged # omit to disable paged data table output
+    css: stylesheet.css # omit if no need for custom stylesheet
+    number_sections: yes # change to no for unnumbered sections
+    toc: yes # change to no to disable table of contents
+    toc_float: true # change to false to keep toc at the top
+    toc_depth: 3 # change to specify which headings to include in toc
+    code_folding: show # change to hide to hide code by default
+editor_options:
+  chunk_output_type: inline
+---
+
+# Setup
+
+Set knitting options
+```{r knitting-options}
+# global knitting options for automatic saving of all plots as .png and .pdf. Also sets cache directory.
+knitr::opts_chunk$set(
+  dev = c("png", "pdf"), fig.keep = "all",
+  dev.args = list(pdf = list(encoding = "WinAnsi", useDingbats = FALSE)),
+  fig.path = file.path("fig_output/", paste0(gsub("\\.[Rr]md", "/", knitr::current_input()))),
+  cache.path = file.path("cache/", paste0(gsub("\\.[Rr]md", "/", knitr::current_input())))
+)
+```
+Load packages
+```{r load-packages, message=FALSE, warning=FALSE}
+library(dada2); packageVersion("dada2") # sequence filtering and sample inference with dada2
+library(ShortRead); packageVersion("ShortRead") # package for loading, displaying, and handling sequences
+library(tidyverse); packageVersion("tidyverse") # handy piping and data operations
+library(rjson); packageVersion("rjson") # read json output from figaro
+```
+
+```{r source}
+# source all relevant scripting files
+# paths.R contains paths to local data and programs
+source(file.path("scripts", "paths.R"))
+```
+Set directories
+````{r set-project-dir}
+# Set up names of sub directories to stay organized
+preprocess_path <- file.path(project_path_OM19, "01_preprocess")
+    demultiplex_path <- file.path(preprocess_path, "demultiplexed")
+        demultiplex_assigned_path <- file.path(demultiplex_path, "assigned")
+    figaro_output_path <- file.path(preprocess_path, "Figaro_output")
+    # filtN_path <- file.path(preprocess_path, "filtN")
+    # trimmed_path <- file.path(preprocess_path, "trimmed")
+filter_path <- file.path(project_path_OM19, "02_filter") 
+````
+
+Now we read in the names of the demultiplexed and assigned fastq files.
+```{r read-fastq-files}
+# Forward and reverse fastq filenames have format: SAMPLENAME_R1_001.fastq and SAMPLENAME_R2_001.fastq
+fnFs <- sort(list.files(demultiplex_assigned_path, pattern="_R1_001.fastq.gz", full.names = TRUE))
+fnRs <- sort(list.files(demultiplex_assigned_path, pattern="_R2_001.fastq.gz", full.names = TRUE))
+```
+
+# Check primer sequences
+The 515 (forward) (Parada) and 806R (reverse) (Apprill) primers ([EarthMicrobiome](https://earthmicrobiome.org/protocols-and-standards/16s/)) were used to amplify this dataset. We record the DNA sequences for those primers.
+
+```{r primers-515F–806R, warning=FALSE, message=FALSE}
+FWD <- "GTGYCAGCMGCCGCGGTAA" # 515F (Parada)
+REV <- "GGACTACNVGGGTWTCTAAT" # 806R (Apprill)
+
+(FWD_length <- str_length(FWD))
+(REV_length <- str_length(REV))
+```
+
+To ensure we have the right primers, and the correct orientation of the primers on the reads, we will verify the presence and orientation of these primers in the data.
+
+```{r Primer-function, warning=FALSE, message=FALSE, tidy=TRUE}
+allOrients <- function(primer){ # Create all orientations of the input sequence
+  require(Biostrings)
+  dna <- DNAString(primer) # The Biostrings works w/ DNAString objects rather than character vectors
+  orients <- c(Forward=dna, Complement=complement(dna), Reverse=reverse(dna), RevComp=reverseComplement(dna))
+  return(sapply(orients, toString)) # Convert back to character vector
+}
+FWD.orients <- allOrients(FWD)
+REV.orients <- allOrients(REV)
+FWD.orients
+```
+
+We are now ready to count the number of times the primers appear in the forward and reverse read, while considering all possible primer orientations. Identifying and counting the primers on one set of paired end FASTQ files is sufficient, assuming all the files were created using the same library preparation, so we'll just process the first sample.
+
+```{r count-primers}
+primerHits <- function(primer, fn) { # Counts number of reads in which the primer is found
+    nhits <- vcountPattern(primer, sread(readFastq(fn)), fixed = FALSE)
+    return(sum(nhits > 0))
+}
+
+rbind(FWD.ForwardReads = sapply(FWD.orients, primerHits, fn=fnFs[[1]]),
+      FWD.ReverseReads = sapply(FWD.orients, primerHits, fn=fnRs[[1]]),
+      REV.ForwardReads = sapply(REV.orients, primerHits, fn=fnFs[[1]]),
+      REV.ReverseReads = sapply(REV.orients, primerHits, fn=fnRs[[1]]))
+```
+
+As expected, the FWD primer is found in the forward reads in its forward orientation, and in the reverse reads in its reverse-complement orientation. Similarly, the REV primer is found with its expected orientations. We will remove the primers later when we truncate lower quality reads. So now let's inspect read quality profiles.
+
+# Inspect read quality profiles
+It's important to get a feel for the quality of the data that we are using. To do this, we will plot the quality of some of the samples.
+
+*From the dada2 tutorial:*
+>In gray-scale is a heat map of the frequency of each quality score at each base position. The median quality score at each position is shown by the green line, and the quartiles of the quality score distribution by the orange lines. The red line shows the scaled proportion of reads that extend to at least that position (this is more useful for other sequencing technologies, as Illumina reads are typically all the same lenghth, hence the flat red line).
+
+````{r plot-qual-R1}
+# Forward reads
+# If the number of samples is 9 or less, plot them all, otherwise, just plot 9 randomly selected samples
+if( length(fnFs) <= 9) {
+  plotQualityProfile(fnFs)
+} else {
+  rand_samples <- sample(size = 9, 1:length(fnFs)) # grab 9 random samples to plot
+  plotQualityProfile(fnFs[rand_samples])
+}
+````
+````{r plot-qual-R2}
+# Reverse reads
+# If the number of samples is 9 or less, plot them all, otherwise, just plot 9 randomly selected samples
+if( length(fnRs) <= 9) {
+  plotQualityProfile(fnRs)
+} else {
+  rand_samples <- sample(size = 9, 1:length(fnRs)) # grab 9 random samples to plot
+  plotQualityProfile(fnRs[rand_samples])
+}
+````
+# Filter parameter optimization with Figaro
+Create a directory for Figaro output
+```{r create-dir-figaro}
+# Create directory to hold the output from figaro
+if (!dir.exists(figaro_output_path)) dir.create(figaro_output_path)
+```
+I couldn't get figaro to run by system2() in R due to a shell permission denied error, but it worked on the command line.
+This chunk generates the exact text I entered in the command line after changing to the figaro directory. I then just read in the figaro output JSON and continue from there.
+```{r figaro}
+# The length of the amplified sequence target not including primers.
+# EMP https://earthmicrobiome.org/protocols-and-standards/16s/ says expected amplicon size of ~390 bp
+# primers total 39 bp
+# sequences in 2X300 bp
+# thus, will try 350 bp for figaro
+figaro_amplicon_length <- 350
+
+figaro_min_overlap <- 20
+
+figaro_output_file_name <- "Figaro_params_OM19.json"
+
+# 2014 barcode length is 12 bases. Cutadapt default error rate is 10%. Thus, 1 allowed error.
+flags_figaro <- paste("--ampliconLength", figaro_amplicon_length, "--forwardPrimerLength", FWD_length, "--reversePrimerLength", REV_length, "--outputFileName", figaro_output_file_name, "--inputDirectory", demultiplex_assigned_path, "--outputDirectory", figaro_output_path, "--minimumOverlap", figaro_min_overlap)
+
+# (figaro_messages <- system2(figaro_path, args = flags_figaro, stdout = TRUE, stderr = TRUE)) 
+
+paste("python3", "figaro.py", flags_figaro) %>% cat()
+```
+
+Read in Figaro JSON output, top 5 suggested trim parameters.
+```{r read-figaro-json}
+# Give the input file name to the function.
+figaro_result <- fromJSON(file = file.path(figaro_output_path, figaro_output_file_name))
+
+figaro_result[1:5] %>% paste(collapse = '\n') %>% cat()
+```
+
+```{r save-figaro-best-params}
+# Save and print Figaro-suggested parameters for dada2::filterAndTrim 
+
+(truncLen_best_figaro <- figaro_result[[1]]$trimPosition)
+
+(maxEE_best_figaro <- figaro_result[[1]]$maxExpectedError)
+```
+
+# Filter and trim for quality
+
+## Organize file paths and directories
+````{r set-filtering-file-paths}
+# set file path for quality-filtered read
+filter_path <- file.path(project_path_OM19, "02_filter") 
+
+# Put filtered reads into separate sub-directories for big data workflow
+dir.create(filter_path)
+    subF_path <- file.path(filter_path, "preprocessed_F") 
+    subR_path <- file.path(filter_path, "preprocessed_R") 
+dir.create(subF_path)
+dir.create(subR_path)
+
+# Move R1 and R2 from trimmed to separate forward/reverse sub-directories
+fnFs.Q <- file.path(subF_path,  basename(fnFs)) 
+fnRs.Q <- file.path(subR_path,  basename(fnRs))
+file.rename(from = fnFs, to = fnFs.Q)
+file.rename(from = fnRs, to = fnRs.Q)
+
+# File parsing; create file names and make sure that forward and reverse files match
+filtpathF <- file.path(subF_path, "filtered") # files go into preprocessed_F/filtered/
+filtpathR <- file.path(subR_path, "filtered") # ...
+fastqFs <- sort(list.files(subF_path, pattern="fastq.gz"))
+fastqRs <- sort(list.files(subR_path, pattern="fastq.gz"))
+if(length(fastqFs) != length(fastqRs)) stop("Forward and reverse files do not match.")
+````
+
+
+Before chosing sequence variants, we want to trim reads where their quality scores begin to drop (the `truncLen` and `truncQ` values) and remove any low-quality reads that are left over after we have finished trimming (the `maxEE` value).
+
+## Filter and trim
+
+````{r filterAndTrim}
+# also trimming lenghts of primers in this step with trimLeft
+# note: had to lower truncQ from 11 (as in DADA2 big data tutorial) to 2 (as in regular DADA2 tutorial) to avoid losing a lot of reads
+filt_out <- filterAndTrim(fwd = file.path(subF_path, fastqFs), filt = file.path(filtpathF, fastqFs), rev = file.path(subR_path, fastqRs), filt.rev = file.path(filtpathR, fastqRs), trimLeft = c(FWD_length, REV_length), truncLen = truncLen_best_figaro, maxEE = maxEE_best_figaro, truncQ = 2, maxN = 0, rm.phix = TRUE, compress = TRUE, verbose = TRUE, multithread = TRUE)
+
+# look at how many reads were kept
+head(filt_out)
+
+# summary of samples in filt_out by percentage
+filt_out %>% 
+  data.frame() %>% 
+  mutate(Samples = rownames(.),
+         percent_kept = 100*(reads.out/reads.in)) %>%
+  select(Samples, everything()) %>%
+  summarise(min_remaining = paste0(round(min(percent_kept), 2), "%"), 
+            median_remaining = paste0(round(median(percent_kept), 2), "%"),
+            mean_remaining = paste0(round(mean(percent_kept), 2), "%"), 
+            max_remaining = paste0(round(max(percent_kept), 2), "%"))
+````
+
+## Check if primers were removed by filterAndTrim
+
+```{r count-primers-filtered}
+# w/o filtN
+rbind(FWD.ForwardReads = sapply(FWD.orients, primerHits, fn=filtpathF[[1]]),
+      FWD.ReverseReads = sapply(FWD.orients, primerHits, fn=filtpathR[[1]]),
+      REV.ForwardReads = sapply(REV.orients, primerHits, fn=filtpathF[[1]]),
+      REV.ReverseReads = sapply(REV.orients, primerHits, fn=filtpathR[[1]]))
+```
+
+Greater than 99% of primer hits were removed during filtering, but a considerable amount remain. These need to be removed. We will do so with cutadapt.
+
+The primerHits function only scores a hit if the full primer sequence is found in the read. That would be 19 or 20 bases in this case. The fact that so many full primer sequences remain in the reads after filtering suggest that they are internal (i.e. regular adapters as opposed to anchored adapters in the cutadapt lingo). So, let's use regular adapters. However, to preserve the possibility that some biological reads happen by chance to be the same as the primer sequences, let's increase the minimum overlap in cutadapt from the default of 3 bases to a somewhat more restrictive 5 bases.
+
+# Remove primers with cutadapt
+## Set up directories for cutadapt
+```{r prepare-cutadapt-dirs}
+# create directories to put the files trimmed by cutadapt
+filt_and_cut_path_F <- file.path(subF_path, "filtered_and_cut")
+filt_and_cut_path_R <- file.path(subR_path, "filtered_and_cut") 
+
+# Create directory to hold the output from cutadapt
+if (!dir.exists(filt_and_cut_path_F)) dir.create(filt_and_cut_path_F)
+if (!dir.exists(filt_and_cut_path_R)) dir.create(filt_and_cut_path_R)
+
+filtfastqFs <- sort(file.path(filtpathF, list.files(filtpathF, pattern="fastq.gz")))
+
+fnFs.cut <- file.path(filt_and_cut_path_F, basename(filtfastqFs))
+
+filtfastqRs <- sort(file.path(filtpathR, list.files(filtpathR, pattern="fastq.gz")))
+
+fnRs.cut <- file.path(filt_and_cut_path_R, basename(filtfastqRs))
+```
+
+## Run cutadapt
+````{r remove-primers-cutadapt}
+# Save the reverse complements of the primers to variables
+FWD.RC <- dada2:::rc(FWD)
+REV.RC <- dada2:::rc(REV)
+
+##  Create the cutadapt flags ##
+# Trim FWD and the reverse-complement of REV off of R1 (forward reads)
+R1.flags <- paste("-g", FWD, "-a", REV.RC, "--minimum-length 50") 
+
+# Trim REV and the reverse-complement of FWD off of R2 (reverse reads)
+R2.flags <- paste("-G", REV, "-A", FWD.RC, "--minimum-length 50") 
+
+## Run Cutadapt
+# default error rate of 10% applied
+# https://cutadapt.readthedocs.io/en/stable/guide.html#error-tolerance
+# I increased the minimum overlap from the default of 3 to 5 to reduce random matches
+# https://cutadapt.readthedocs.io/en/stable/guide.html#minimum-overlap-reducing-random-matches
+
+cutadapt_messages_2_list <- vector("list", length(fnFs)) # set cutadapt message output list
+for (i in seq_along(fnFs)) {
+     cutadapt_messages_2_list[[i]] <- system2(cutadapt_path, args = c(R1.flags, R2.flags, "-n", 2, # -n 2 required to remove FWD and REV from reads
+                               "--overlap", 5,
+                               "-o", fnFs.cut[i], "-p", fnRs.cut[i], # output files
+                               filtfastqFs[i], filtfastqRs[i]), stdout = TRUE, stderr = TRUE) # input files
+}
+
+cutadapt_messages_2_list # print output text
+```
+
+## Check primer removal after cutadapt
+```{r check-primer-removal-cut-1}
+# As a sanity check, we will check for primers in the first cutadapt-ed sample:
+    ## should all be zero!
+rbind(FWD.ForwardReads = sapply(FWD.orients, primerHits, fn = fnFs.cut[[1]]), 
+      FWD.ReverseReads = sapply(FWD.orients, primerHits, fn = fnRs.cut[[1]]), 
+      REV.ForwardReads = sapply(REV.orients, primerHits, fn = fnFs.cut[[1]]), 
+      REV.ReverseReads = sapply(REV.orients, primerHits, fn = fnRs.cut[[1]]))
+```
+
+```{r check-primer-removal-cut-2}
+# same for the second sample
+rbind(FWD.ForwardReads = sapply(FWD.orients, primerHits, fn = fnFs.cut[[2]]), 
+      FWD.ReverseReads = sapply(FWD.orients, primerHits, fn = fnRs.cut[[2]]), 
+      REV.ForwardReads = sapply(REV.orients, primerHits, fn = fnFs.cut[[2]]), 
+      REV.ReverseReads = sapply(REV.orients, primerHits, fn = fnRs.cut[[2]]))
+```
+
+## Plot the quality of the filtered and cut fastq files.
+
+````{r plot-qual-R1-filt-cut}
+# Forward reads
+# If the number of samples is 9 or less, plot them all, otherwise, just plot 9 randomly selected samples
+if( length(fnFs.cut) <= 9) {
+  plotQualityProfile(fnFs.cut)
+} else {
+  rand_samples <- sample(size = 9, 1:length(fnFs.cut)) # grab 9 random samples to plot
+  plotQualityProfile(fnFs.cut[rand_samples])
+}
+````
+
+````{r plot-qual-R2-filt-cut}
+# Forward reads
+# If the number of samples is 9 or less, plot them all, otherwise, just plot 9 randomly selected samples
+if( length(fnRs.cut) <= 9) {
+  plotQualityProfile(fnRs.cut)
+} else {
+  rand_samples <- sample(size = 9, 1:length(fnRs.cut)) # grab 9 random samples to plot
+  plotQualityProfile(fnRs.cut[rand_samples])
+}
+````
+
+# Infer sequence variants
+In this part of the pipeline, dada2 will learn to distinguish error from biological 
+differences using a subset of our data as a training set. After it understands the 
+error rates, we will reduce the size of the dataset by combining all identical 
+sequence reads into "unique sequences". Then, using the dereplicated data and 
+error rates, dada2 will infer the sequence variants in our data. Finally, 
+we will merge the corresponding forward and reverse reads to create a list of the 
+fully denoised sequences and create a sequence table from the result.
+
+Extract sample names
+```{r extract-sample-names}
+# Extract sample names, assuming filenames have format: SAMPLENAME_XXX.fastq
+sample.names <- sapply(strsplit(basename(fnFs.cut), "_S[[:digit:]]_L001"), `[`, 1)
+
+sample.namesR <- sapply(strsplit(basename(fnRs.cut), "_S[[:digit:]]_L001"), `[`, 1)
+
+# Double check
+if(!identical(sample.names, sample.namesR)) stop("Forward and reverse files do not match.")
+names(fnFs.cut) <- sample.names
+names(fnRs.cut) <- sample.names
+```
+
+## Learn the error rates
+
+````{r learn-error-rates}
+set.seed(100) # set seed to ensure that randomized steps are reproducible
+
+# Learn forward error rates
+errF <- learnErrors(fnFs.cut, nbases=5e8, multithread=TRUE)
+
+# Learn reverse error rates
+errR <- learnErrors(fnRs.cut, nbases=5e8, multithread=TRUE)
+````
+
+### Plot Error Rates
+The error rates for each possible transition (A→C, A→G, …) are shown. Points are the observed error rates for each consensus quality score. The black line shows the estimated error rates after convergence of the machine-learning algorithm. The red line shows the error rates expected under the nominal definition of the Q-score. Here, we want to see estimated error rates (black line) that are a good fit to the observed rates (points), and that the error rates drop with increased quality as expected. If these criteria aren't observed, then it may be a good idea to increase the ```nbases``` parameter. This allows the machine learning algorithm to train on a larger portion of your data and may help improve the fit.
+
+For this run, I increased  ```nbases``` from the dada2 big data default of 1e8 to 5e8. It's hard to say if it improved the fit much, but the fit seems good enough.
+
+````{r plotErrors-f}
+plotErrors(errF, nominalQ=TRUE)
+```
+
+````{r plotErrors-R}
+plotErrors(errR, nominalQ=TRUE)
+````
+
+
+## Dereplication, sequence inference, and merging of paired-end reads
+
+````{r }
+# make lists to hold the loop output
+mergers <- vector("list", length(sample.names))
+names(mergers) <- sample.names
+ddF <- vector("list", length(sample.names))
+names(ddF) <- sample.names
+ddR <- vector("list", length(sample.names))
+names(ddR) <- sample.names
+
+# For each sample, get a list of merged and denoised sequences
+for(sam in sample.names) {
+    cat("Processing:", sam, "\n")
+    # Dereplicate forward reads
+    derepF <- derepFastq(fnFs.cut[[sam]])
+    # Infer sequences for forward reads
+    dadaF <- dada(derepF, err=errF, multithread=TRUE)
+    ddF[[sam]] <- dadaF
+    # Dereplicate reverse reads
+    derepR <- derepFastq(fnRs.cut[[sam]])
+    # Infer sequences for reverse reads
+    dadaR <- dada(derepR, err=errR, multithread=TRUE)
+    ddR[[sam]] <- dadaR
+    # Merge reads together
+    merger <- mergePairs(ddF[[sam]], derepF, ddR[[sam]], derepR)
+    mergers[[sam]] <- merger
+}
+
+rm(derepF); rm(derepR)
+````
+
+## Construct sequence table
+
+````{r construct-seqtab}
+seqtab <- makeSequenceTable(mergers)
+```
+
+```{r write-seqtab}
+write_rds(seqtab, path = format(Sys.Date(), "data_output/seqtab_OM19_processed_%Y%m%d.rds"), compress = "gz")
+```
+
+# Remove Chimeras
+Although dada2 has searched for insertion/deletion errors and substitutions, there may still be chimeric
+sequences in our dataset (sequences that are derived from forward and reverse sequences from 
+two different organisms becoming fused together during PCR and/or sequencing). To identify 
+chimeras, we will search for rare sequence variants that can be reconstructed by combining
+left-hand and right-hand segments from two more abundant "parent" sequences.
+
+````{r rm-chimeras}
+# Remove chimeras
+seqtab_nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE)
+```
+
+````{r percent-non-chimeric}
+# Print percentage of our seqences that were not chimeric.
+100*sum(seqtab_nochim)/sum(seqtab)
+```
+
+```{r write-seqtab-nochim}
+write_rds(seqtab_nochim, path = format(Sys.Date(), "data_output/seqtab_nochim_OM19_processed_%Y%m%d.rds"), compress = "gz")
+```

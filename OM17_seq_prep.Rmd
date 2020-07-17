@@ -48,11 +48,6 @@ Set paths for idemp, cutadapt, and data
 (cutadapt_messages_1 <- system2(cutadapt_path, args = "--version", stdout = TRUE, stderr = TRUE))
 ````
 
-| <span> |
-| :--- | 
-| **NOTE:** idemp relies on having a match in length between the index file and and the barcode sequences. Since the index file usually includes a extra linker basepair (making it 13bp long), you should append the barcode sequences with "N" to make sure each is 13bp long. If you are not sure of the length of index reads, check with the sequencing center. If your index reads are 12bp long, you do NOT need to add an "N". |
-| <span> |
-
 Set up file paths in YOUR directory where you want data; 
 you do not need to create the subdirectories but they are nice to have
 for organizational purposes. 
@@ -63,12 +58,9 @@ preprocess_path <- file.path(project_path_OM17, "01_preprocess")
     demultiplex_path <- file.path(preprocess_path, "demultiplexed")
       demultiplex_assigned_path <- file.path(demultiplex_path, "assigned")
       demultiplex_unassigned_path <- file.path(demultiplex_path, "unassigned")
-    # filtN_path <- file.path(preprocess_path, "filtN")
-    # trimmed_path <- file.path(preprocess_path, "trimmed")
 ````
 
 # Demultiplex
-## Call the demultiplexing script
 Demultiplexing splits your reads out into separate files based on the barcodes associated with each sample. 
 
 ```{r create-dir-demux}
@@ -85,68 +77,17 @@ if (!dir.exists(demultiplex_unassigned_path)) dir.create(demultiplex_unassigned_
 error_rate_cutadapt <- 0.1
 
 # minimum length to output reads for cutadapt
-minimum_length_cutadapt_1 <- 50
+minimum_length_cutadapt <- 50
 
 # minimum overlap for "adapter" (barcode) to be detected by cutadapt
-minimum_overlap_cutadapt_1 <- 6
+minimum_overlap_cutadapt <- 6
 
 # note: using anchored 5 prime barcodes
+# not allowing insertion and deletion errors
 
 # create calls to cutadapt
-flags_cutadapt_1 <- paste("-e", error_rate_cutadapt, "--no-indels", "-m", minimum_length_cutadapt_1, "--overlap", minimum_overlap_cutadapt_1, "-g",  paste0("file:", barcode_path_OM17), "-o", file.path(demultiplex_assigned_path, "{name}_R1.fastq.gz"), "-p", file.path(demultiplex_assigned_path, "{name}_R2.fastq.gz"), "--untrimmed-output", file.path(demultiplex_unassigned_path, "unassigned_R1.fastq.gz"), "--untrimmed-paired-output", file.path(demultiplex_unassigned_path, "unassigned_R2.fastq.gz"), R1_path_OM17, R2_path_OM17)
+flags_cutadapt <- paste("-e", error_rate_cutadapt, "--no-indels", "-m", minimum_length_cutadapt, "--overlap", minimum_overlap_cutadapt, "-g",  paste0("file:", barcode_path_OM17), "-o", file.path(demultiplex_assigned_path, "{name}_R1.fastq.gz"), "-p", file.path(demultiplex_assigned_path, "{name}_R2.fastq.gz"), "--untrimmed-output", file.path(demultiplex_unassigned_path, "unassigned_R1.fastq.gz"), "--untrimmed-paired-output", file.path(demultiplex_unassigned_path, "unassigned_R2.fastq.gz"), R1_path_OM17, R2_path_OM17)
 
-# run cutdapt and save messages
-cutadapt_messages_1 <- system2(cutadapt_path, args = flags_cutadapt_1, stdout = TRUE, stderr = TRUE)
-
-# print messages
-cutadapt_messages_1 %>% paste(collapse = '\n') %>% cat()
-```
-
-
-```{r}
-# cutadapt_messages_1 %>% paste(collapse = '\n') %>% cat(file="data_output/OM17_anchored_5_prime_cutadapt_demux_output.txt")
-```
-
-
-```{r list-demux-files}
-# # Look at output of demultiplexing
-# list.files(demultiplex_path)
-```
-
-## Clean up the demultiplexed output
-
-````{r demux-cleanup}
-# # Change names of unassignable reads so they are not included in downstream processing
-# unassigned_1 <- paste("mv", file.path(demultiplex_path, "unknown_R1.fastq.gz"), file.path(demultiplex_path, "Unassigned_reads1.fastq.gz"))
-#                        
-# unassigned_2 <- paste("mv", file.path(demultiplex_path, "unknown_R2.fastq.gz"), file.path(demultiplex_path, "Unassigned_reads2.fastq.gz"))
-#                        
-# system(unassigned_1)
-# system(unassigned_2)
-# 
-# # Rename files
-# # First, generate a vector of desired (shortened) file names
-# 
-# # remove text prior to sample name
-# R1_names <- gsub(demultiplex_path, "", list.files(demultiplex_path, pattern="R1", full.names = TRUE))
-# 
-# # remove text prior to sample name
-# R1_names <- gsub("_R1.fastq.gz", "", R1_names)
-# 
-# # put names back together, appending Illumina naming convention, which is the format for later processing with Figaro
-# R1_names <- paste0(R1_names, "_S0_L001_R1_001.fastq.gz")
-# 
-# # Now, rename files
-# file.rename(from = list.files(demultiplex_path, pattern="R1", full.names = TRUE), to = file.path(demultiplex_path, R1_names))
-# 
-# 
-# # Repeat the above with the reverse reads
-# 
-# R2_names <- gsub(demultiplex_path, "", list.files(demultiplex_path, pattern="R2", full.names = TRUE))
-# 
-# R2_names <- gsub("_R2.fastq.gz", "", R2_names)
-# 
-# R2_names <- paste0(R2_names, "_S0_L001_R2_001.fastq.gz")
-# 
-# file.rename(from = list.files(demultiplex_path, pattern="R2", full.names = TRUE), to = file.path(demultiplex_path, R2_names))
+# run cutdapt and print messages
+(cutadapt_messages <- system2(cutadapt_path, args = flags_cutadapt, stdout = TRUE, stderr = TRUE))
 ```

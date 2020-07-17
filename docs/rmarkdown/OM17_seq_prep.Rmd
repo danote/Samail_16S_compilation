@@ -1,0 +1,95 @@
+---
+---
+---
+title: "Demultipexing and adapter trimming of 16S rRNA gene sequences of DNA from Oman samples collected in 2017"
+subtitle: "Source file: OM17_seq_prep.Rmd"
+author: "Daniel Nothaft"
+date: "`r format(Sys.Date(), '%d %b %Y')`"
+output:
+  html_document: 
+    df_print: paged # omit to disable paged data table output
+    css: stylesheet.css # omit if no need for custom stylesheet
+    number_sections: yes # change to no for unnumbered sections
+    toc: yes # change to no to disable table of contents
+    toc_float: true # change to false to keep toc at the top
+    toc_depth: 3 # change to specify which headings to include in toc
+    code_folding: show # change to hide to hide code by default
+editor_options:
+  chunk_output_type: inline
+---
+
+# Setup
+
+Set knitting options
+```{r knitting-options}
+# global knitting options for automatic saving of all plots as .png and .pdf. Also sets cache directory.
+knitr::opts_chunk$set(
+  dev = c("png", "pdf"), fig.keep = "all",
+  dev.args = list(pdf = list(encoding = "WinAnsi", useDingbats = FALSE)),
+  fig.path = file.path("fig_output/", paste0(gsub("\\.[Rr]md", "/", knitr::current_input()))),
+  cache.path = file.path("cache/", paste0(gsub("\\.[Rr]md", "/", knitr::current_input())))
+)
+```
+
+Load packages
+```{r load-packages, message=FALSE, warning=FALSE}
+library(dada2); packageVersion("dada2") # sequence filtering and sample inference with dada2
+library(ShortRead); packageVersion("ShortRead") # package for loading, displaying, and handling sequences
+library(tidyverse); packageVersion("tidyverse") # handy piping and data operations
+```
+
+```{r source}
+# source all relevant scripting files
+# paths.R contains paths to local data and programs
+source(file.path("scripts", "paths.R"))
+```
+
+Set paths for idemp, cutadapt, and data
+````{r test-programs}
+# Check by cutadapt version
+(cutadapt_messages_1 <- system2(cutadapt_path, args = "--version", stdout = TRUE, stderr = TRUE))
+````
+
+Set up file paths in YOUR directory where you want data; 
+you do not need to create the subdirectories but they are nice to have
+for organizational purposes. 
+
+````{r set-project-dir}
+# Set up names of sub directories to stay organized
+preprocess_path <- file.path(project_path_OM17, "01_preprocess")
+    demultiplex_path <- file.path(preprocess_path, "demultiplexed")
+      demultiplex_assigned_path <- file.path(demultiplex_path, "assigned")
+      demultiplex_unassigned_path <- file.path(demultiplex_path, "unassigned")
+````
+
+# Demultiplex
+Demultiplexing splits your reads out into separate files based on the barcodes associated with each sample. 
+
+```{r create-dir-demux}
+# Create directory to hold the output from cutadapt
+if (!dir.exists(project_path_OM17)) dir.create(project_path_OM17)
+if (!dir.exists(preprocess_path)) dir.create(preprocess_path)
+if (!dir.exists(demultiplex_path)) dir.create(demultiplex_path)
+if (!dir.exists(demultiplex_assigned_path)) dir.create(demultiplex_assigned_path)
+if (!dir.exists(demultiplex_unassigned_path)) dir.create(demultiplex_unassigned_path)
+```
+
+```{r demux}
+# 2017 barcode length is 12 bases. At error rate of 10% (cutadapt default), there is 1 allowed error.
+error_rate_cutadapt <- 0.1
+
+# minimum length to output reads for cutadapt
+minimum_length_cutadapt <- 50
+
+# minimum overlap for "adapter" (barcode) to be detected by cutadapt
+minimum_overlap_cutadapt <- 6
+
+# note: using anchored 5 prime barcodes
+# not allowing insertion and deletion errors
+
+# create calls to cutadapt
+flags_cutadapt <- paste("-e", error_rate_cutadapt, "--no-indels", "-m", minimum_length_cutadapt, "--overlap", minimum_overlap_cutadapt, "-g",  paste0("file:", barcode_path_OM17), "-o", file.path(demultiplex_assigned_path, "{name}_R1.fastq.gz"), "-p", file.path(demultiplex_assigned_path, "{name}_R2.fastq.gz"), "--untrimmed-output", file.path(demultiplex_unassigned_path, "unassigned_R1.fastq.gz"), "--untrimmed-paired-output", file.path(demultiplex_unassigned_path, "unassigned_R2.fastq.gz"), R1_path_OM17, R2_path_OM17)
+
+# run cutdapt and print messages
+(cutadapt_messages <- system2(cutadapt_path, args = flags_cutadapt, stdout = TRUE, stderr = TRUE))
+```

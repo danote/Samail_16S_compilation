@@ -1,0 +1,67 @@
+---
+title: "Fastq explorer"
+output:
+  html_document:
+    css: stylesheet.css
+    fig_caption: yes
+    number_sections: no
+    toc: yes
+    toc_float: true
+    toc_depth: 3
+    code_folding: show
+    df_print: paged
+subtitle: "Source file: fastq_explorer.Rmd"
+author: "Daniel Nothaft"
+editor_options:
+  chunk_output_type: inline
+date: "`r Sys.Date()`"
+---
+
+Reads fastq, looks at content. can write output fastq.gz
+
+# Setup
+
+```{r}
+library(ShortRead)
+```
+
+```{r}
+source(file.path("scripts", "paths.R"))
+```
+
+# Read 1
+
+```{r}
+R1 <- readFastq(R1_path_OM14)
+```
+
+
+
+```{r}
+sread(R1)[1:10]
+```
+
+```{r}
+sread(R1)[11:20]
+```
+
+```{r}
+sread(R1)[21:30]
+```
+
+
+```{r}
+sread(R1)
+```
+
+^some of the forward reads match barcodes
+
+# Read 2
+
+```{r}
+R2 <- readFastq(R2_path_OM14)
+```
+
+```{r}
+sread(R2)
+```

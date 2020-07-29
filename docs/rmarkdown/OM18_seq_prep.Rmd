@@ -31,37 +31,16 @@ knitr::opts_chunk$set(
 )
 ```
 
-Load packages
-```{r load-packages, message=FALSE, warning=FALSE}
-library(dada2); packageVersion("dada2") # sequence filtering and sample inference with dada2
-library(ShortRead); packageVersion("ShortRead") # package for loading, displaying, and handling sequences
-library(tidyverse); packageVersion("tidyverse") # handy piping and data operations
+```{r source}
+# source all relevant scripting files
+# paths.R contains paths to local data and programs
+source(file.path("scripts", "paths.R"))
 ```
 
-Set paths for idemp, cutadapt, and data
-````{r set-paths}
-# Set up pathway to idemp (demultiplexing tool) and test
-idemp <- "/Users/melo.d/opt/idemp/idemp"
-(idemp_messages_1 <- system2(idemp, stdout = TRUE, stderr = TRUE)) # Check that idemp is in your path and you can run shell commands from R
-
-# # Set up pathway to cutadapt (primer trimming tool) and test
-cutadapt <- "/Users/melo.d/.local/bin/cutadapt"
-(cutadapt_messages_1 <- system2(cutadapt, args = "--version", stdout = TRUE, stderr = TRUE)) # Check by running shell command from R
-
-# Set path to shared data folder and contents
-data.fp <- "/Users/melo.d/Desktop/Boulder/2018_fall/molecular_methods_ebio/Molecular-Methods/dada2/molec-methods-raw-reads"
-
-# List all files in shared folder to check path
-list.files(data.fp)
-
-# Set file paths for barcodes file, map file, and fastqs
-    # Barcodes need to have 'N' on the end of each 12bp sequence for compatability
-barcode.fp <- file.path(data.fp, "barcode_demultiplex_short.txt") # .txt file: barcode </t> sampleID
-map.fp <- file.path(data.fp, "oman_map16S.txt")
-I1.fp <- file.path(data.fp, "Undetermined_S0_L001_I1_001.fastq.gz")
-R1.fp <- file.path(data.fp, "Undetermined_S0_L001_R1_001.fastq.gz")
-R2.fp <- file.path(data.fp, "Undetermined_S0_L001_R2_001.fastq.gz")
-````
+Test idemp
+````{r test-idemp}
+(idemp_messages_1 <- system2(idemp_path, stdout = TRUE, stderr = TRUE)) # Check that idemp is in your path and you can run shell commands from R
+```
 
 | <span> |
 | :--- | 
@@ -72,14 +51,12 @@ Set up file paths in YOUR directory where you want data;
 you do not need to create the subdirectories but they are nice to have
 for organizational purposes. 
 
-````{r make-project-dir}
-project.fp <- "/Users/melo.d/Desktop/Research/Oman_fieldwork/Samail_16S_compilation_fq_outputs/2018" # CHANGE ME to project directory; don't append with a "/"
-
+````{r set-project-dir}
 # Set up names of sub directories to stay organized
-preprocess.fp <- file.path(project.fp, "01_preprocess")
-    demultiplex.fp <- file.path(preprocess.fp, "demultiplexed")
-    filtN.fp <- file.path(preprocess.fp, "filtN")
-    trimmed.fp <- file.path(preprocess.fp, "trimmed")
+preprocess_path <- file.path(project_path_OM18, "01_preprocess")
+    demultiplex_path <- file.path(preprocess_path, "demultiplexed")
+      demultiplex_assigned_path <- file.path(demultiplex_path, "assigned")
+      demultiplex_unassigned_path <- file.path(demultiplex_path, "unassigned")
 ````
 
 # Demultiplex
@@ -89,183 +66,27 @@ Demultiplexing splits your reads out into separate files based on the barcodes a
 ````{r idemp}
 allowed_mismatches_demux <- "1" # allowed base mismatches. I use 1, which is the idemp default. Note: this should be of character class, not a number/double.
 
-flags <- paste("-b", barcode.fp, "-I1", I1.fp, "-R1", R1.fp, "-R2", R2.fp, "-m",  allowed_mismatches_demux, "-o", demultiplex.fp) 
-(idemp_messages_2 <- system2(idemp, args = flags, stdout = TRUE, stderr = TRUE)) 
+flags <- paste("-b", barcode_path_OM18, "-I1", I1_path_OM18, "-R1", R1_path_OM18, "-R2", R2_path_OM18, "-m",  allowed_mismatches_demux, "-o", demultiplex_path) 
+(idemp_messages_2 <- system2(idemp_path, args = flags, stdout = TRUE, stderr = TRUE))
+```
 
+````{r print-demux-output-file-names}
 # Look at output of demultiplexing
-list.files(demultiplex.fp)
+list.files(demultiplex_path)
 ````
 
-## Clean up the output from idemp
+## Separate assigned and unassigned fastqs for downstream processing
 
 ````{r idemp-cleanup}
-# Change names of unassignable reads so they are not included in downstream processing
-unassigned_1 <- paste0("mv", " ", demultiplex.fp, "/Undetermined_S0_L001_R1_001.fastq.gz_unsigned.fastq.gz",
-                       " ", demultiplex.fp, "/Unassigned_reads1.fastq.gz")
-unassigned_2 <- paste0("mv", " ", demultiplex.fp, "/Undetermined_S0_L001_R2_001.fastq.gz_unsigned.fastq.gz", 
-                       " ", demultiplex.fp, "/Unassigned_reads2.fastq.gz")
+# Move unassigned reads so they are not included in downstream processing
+unassigned_1 <- paste0("mv", " ", demultiplex_path, "/Undetermined_S0_L001_R1_001.fastq.gz_unsigned.fastq.gz",
+                       " ", demultiplex_unassigned_path, "/Undetermined_S0_L001_R1_001.fastq.gz_unsigned.fastq.gz")
+unassigned_2 <- paste0("mv", " ", demultiplex_path, "/Undetermined_S0_L001_R2_001.fastq.gz_unsigned.fastq.gz", 
+                       " ", demultiplex_unassigned_path, "/Undetermined_S0_L001_R1_001.fastq.gz_unsigned.fastq.gz")
 system(unassigned_1)
 system(unassigned_2)
 
-# Rename files - use gsub to get names in order!
-# First, generate a vector of desired (shortened) file names
-
-# remove text prior to sample name
-R1_names <- gsub(paste0(demultiplex.fp, "/Undetermined_S0_L001_R1_001.fastq.gz_"), "", 
-                 list.files(demultiplex.fp, pattern="R1", full.names = TRUE))
-
-# remove file extension of sample name
-R1_names <- gsub(".fastq.gz", "", R1_names)
-
-# put names back together, appending Illumina naming convention, which is the format for later processing with Figaro
-R1_names <- paste0(R1_names, "_S0_L001_R1_001.fastq.gz")
-
-# Now, rename files
-file.rename(from = list.files(demultiplex.fp, pattern="R1", full.names = TRUE), to = 
-            paste0(demultiplex.fp, "/", R1_names))
-
-# Repeat the above with the reverse reads
-
-R2_names <- gsub(paste0(demultiplex.fp, "/Undetermined_S0_L001_R2_001.fastq.gz_"), "", 
-                 list.files(demultiplex.fp, pattern="R2", full.names = TRUE))
-R2_names <- gsub(".fastq.gz", "", R2_names)
-
-R2_names <- paste0(R2_names, "_S0_L001_R2_001.fastq.gz")
-
-# Now, rename files
-file.rename(from = list.files(demultiplex.fp, pattern="R2", full.names = TRUE), to = 
-            paste0(demultiplex.fp, "/", R2_names))
-
-# Get full paths for all files and save them for downstream analyses
-# Forward and reverse fastq file names have format: 
-fnFs <- sort(list.files(demultiplex.fp, pattern="_R1_001", full.names = TRUE))
-fnRs <- sort(list.files(demultiplex.fp, pattern="_R2_001", full.names = TRUE))
+# Move assigned reads to their own directory
+file.rename(from = list.files(demultiplex_path, full.names = TRUE), to = 
+            paste0(demultiplex_assigned_path, "/", list.files(demultiplex_path, full.names = FALSE)))
 ````
-
-# Primer/Adapter trimming
-## Pre-filter to remove sequence reads with Ns
-Ambiguous bases will make it hard for cutadapt to find short primer sequences in the reads.
-To solve this problem, we will remove sequences with ambiguous bases (Ns)
-
-````{r prefilter-Ns}
-# Name the N-filtered files to put them in filtN/ subdirectory
-fnFs.filtN <- file.path(preprocess.fp, "filtN", basename(fnFs))
-fnRs.filtN <- file.path(preprocess.fp, "filtN", basename(fnRs))
-
-# Filter Ns from reads and put them into the filtN directory
-# set matchIDs = TRUE to circumvent error "Mismatched forward and reverse sequence files"
-filterAndTrim(fnFs, fnFs.filtN, fnRs, fnRs.filtN, maxN = 0, multithread = TRUE, matchIDs = TRUE) 
-# CHANGE multithread to FALSE on Windows (here and elsewhere in the program)
-````
-
-## Prepare the primer sequences and custom functions for analyzing the results from cutadapt
-Assign the primers you used to "FWD" and "REV" below. Note primers should be not be reverse complemented ahead of time. The data processed here used the 515f (Parada) and 806R (Apprill) primers.
-
-````{r input-primers}
-# Set up the primer sequences to pass along to cutadapt
-# https://earthmicrobiome.org/protocols-and-standards/16s/
-FWD <- "GTGYCAGCMGCCGCGGTAA"  ## CHANGE ME # this is 515F (Parada) 
-REV <- "GGACTACNVGGGTWTCTAAT"  ## CHANGE ME # this is 806R (Apprill)
-
-# Write a function that creates a list of all orientations of the primers
-allOrients <- function(primer) {
-    # Create all orientations of the input sequence
-    require(Biostrings)
-    dna <- DNAString(primer)  # The Biostrings works w/ DNAString objects rather than character vectors
-    orients <- c(Forward = dna, Complement = complement(dna), Reverse = reverse(dna), 
-                 RevComp = reverseComplement(dna))
-    return(sapply(orients, toString))  # Convert back to character vector
-}
-
-# Save the primer orientations to pass to cutadapt
-FWD.orients <- allOrients(FWD)
-REV.orients <- allOrients(REV)
-FWD.orients
-
-# Write a function that counts how many time primers appear in a sequence
-primerHits <- function(primer, fn) {
-    # Counts number of reads in which the primer is found
-    nhits <- vcountPattern(primer, sread(readFastq(fn)), fixed = FALSE)
-    return(sum(nhits > 0))
-}
-````
-
-## Check for primer sequences
-
-Before running cutadapt, we will look at primer detection for the first sample, as a check. There may be some primers here, we will remove them below using cutadapt.
-
-````{r check-primers-1}
-rbind(FWD.ForwardReads = sapply(FWD.orients, primerHits, fn = fnFs.filtN[[1]]), 
-      FWD.ReverseReads = sapply(FWD.orients, primerHits, fn = fnRs.filtN[[1]]), 
-      REV.ForwardReads = sapply(REV.orients, primerHits, fn = fnFs.filtN[[1]]), 
-      REV.ReverseReads = sapply(REV.orients, primerHits, fn = fnRs.filtN[[1]]))
-````
-
-Checking the second sample too.
-````{r check-primers-2}
-rbind(FWD.ForwardReads = sapply(FWD.orients, primerHits, fn = fnFs.filtN[[2]]), 
-      FWD.ReverseReads = sapply(FWD.orients, primerHits, fn = fnRs.filtN[[2]]), 
-      REV.ForwardReads = sapply(REV.orients, primerHits, fn = fnFs.filtN[[2]]), 
-      REV.ReverseReads = sapply(REV.orients, primerHits, fn = fnRs.filtN[[2]]))
-````
-
-It looks like the the FWD primer is found in in some of the reverse reads in its reverse-complement orientation (due to read-through when the amplicon is short), and vice versa for the REV primer. We'll trim those off with cutadapt.
-
-## Remove primers with cutadapt
-
-````{r remove-primers}
-# Create directory to hold the output from cutadapt
-if (!dir.exists(trimmed.fp)) dir.create(trimmed.fp)
-fnFs.cut <- file.path(trimmed.fp, basename(fnFs))
-fnRs.cut <- file.path(trimmed.fp, basename(fnRs))
-
-# Save the reverse complements of the primers to variables
-FWD.RC <- dada2:::rc(FWD)
-REV.RC <- dada2:::rc(REV)
-
-# Anchoring primer sequences so that cutadapt searches FWD and REV sequences only at the beginning of the FWD and REV reads, respectively
-# https://cutadapt.readthedocs.io/en/stable/guide.html#adapter-types
-FWD_anchored_5prime <- paste0("^", FWD)
-REV_anchored_5prime <- paste0("^", REV)
-
-##  Create the cutadapt flags ##
-# Trim FWD and the reverse-complement of REV off of R1 (forward reads)
-R1.flags <- paste("-g", FWD_anchored_5prime, "-a", REV.RC, "--minimum-length 50") 
-
-# Trim REV and the reverse-complement of FWD off of R2 (reverse reads)
-R2.flags <- paste("-G", REV_anchored_5prime, "-A", FWD.RC, "--minimum-length 50") 
-
-## Run Cutadapt
-# default error rate of 10% applied
-# https://cutadapt.readthedocs.io/en/stable/guide.html#error-tolerance
-# I increased the minimum overlap from the default of 3 to 5 to reduce random matches
-# https://cutadapt.readthedocs.io/en/stable/guide.html#minimum-overlap-reducing-random-matches
-
-cutadapt_messages_2_list <- vector("list", length(fnFs)) # set cutadapt message output list
-for (i in seq_along(fnFs)) {
-     cutadapt_messages_2_list[[i]] <- system2(cutadapt, args = c(R1.flags, R2.flags, "-n", 2, # -n 2 required to remove FWD and REV from reads
-                               "--overlap", 5,
-                               "-o", fnFs.cut[i], "-p", fnRs.cut[i], # output files
-                               fnFs.filtN[i], fnRs.filtN[i]), stdout = TRUE, stderr = TRUE) # input files
-}
-
-cutadapt_messages_2_list # print output text
-```
-
-## Check primer removal
-```{r check-primer-removal-1}
-# As a sanity check, we will check for primers in the first cutadapt-ed sample:
-    ## should all be zero!
-rbind(FWD.ForwardReads = sapply(FWD.orients, primerHits, fn = fnFs.cut[[1]]), 
-      FWD.ReverseReads = sapply(FWD.orients, primerHits, fn = fnRs.cut[[1]]), 
-      REV.ForwardReads = sapply(REV.orients, primerHits, fn = fnFs.cut[[1]]), 
-      REV.ReverseReads = sapply(REV.orients, primerHits, fn = fnRs.cut[[1]]))
-```
-
-```{r check-primer-removal-2}
-# same for the second sample
-rbind(FWD.ForwardReads = sapply(FWD.orients, primerHits, fn = fnFs.cut[[2]]), 
-      FWD.ReverseReads = sapply(FWD.orients, primerHits, fn = fnRs.cut[[2]]), 
-      REV.ForwardReads = sapply(REV.orients, primerHits, fn = fnFs.cut[[2]]), 
-      REV.ReverseReads = sapply(REV.orients, primerHits, fn = fnRs.cut[[2]]))
-```

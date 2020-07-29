@@ -1,2 +1,2 @@
 type,source_file,source_copy,source_file_hash,doc_file,last_success,last_fail
-RMarkdown,OM17_taxa_assignment.Rmd,docs/rmarkdown/OM17_taxa_assignment.Rmd,3a07008aaca18ab095a3ae268d5864cd,docs/rmarkdown/OM17_taxa_assignment.html,2020-07-16 16:21:17 MDT,NA
+RMarkdown,OM18_taxa_assignment.Rmd,docs/rmarkdown/OM18_taxa_assignment.Rmd,bed80634170b546a5bd9d5ce112255c2,docs/rmarkdown/OM18_taxa_assignment.html,2020-07-20 00:01:49 MDT,NA

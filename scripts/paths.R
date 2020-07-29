@@ -55,6 +55,22 @@ R2_path_OM17 <- "/Users/melo.d/Desktop/Research/Oman_fieldwork/2017/OM17_16S_pro
 project_path_OM17 <- "/Users/melo.d/Desktop/Research/Oman_fieldwork/Samail_16S_compilation_fq_outputs/2017"
 
 
+
+### 2018 ###
+#' Set path to shared data folder and contents
+data_path_OM18 <- "/Users/melo.d/Desktop/Boulder/2018_fall/molecular_methods_ebio/Molecular-Methods/dada2/molec-methods-raw-reads"
+# Set file paths for barcodes file, map file, and fastqs
+# For idemp, barcodes need to have 'N' on the end of each 12bp sequence for compatability
+barcode_path_OM18 <- file.path(data_path_OM18, "barcode_demultiplex_short.txt") # .txt file: barcode </t> sampleID
+# map_path_OM18 <- file.path(data_path_OM18, "oman_map18S.txt")
+I1_path_OM18 <- file.path(data_path_OM18, "Undetermined_S0_L001_I1_001.fastq.gz")
+R1_path_OM18 <- file.path(data_path_OM18, "Undetermined_S0_L001_R1_001.fastq.gz")
+R2_path_OM18 <- file.path(data_path_OM18, "Undetermined_S0_L001_R2_001.fastq.gz")
+
+project_path_OM18 <- "/Users/melo.d/Desktop/Research/Oman_fieldwork/Samail_16S_compilation_fq_outputs/2018"
+
+
+
 ### 2019 ###
 #' Set path to shared data folder and contents
 # data_path_OM19 <- "/Users/melo.d/Desktop/Research/Oman_fieldwork/Samail_19S_compilation_supporting_files/2019"

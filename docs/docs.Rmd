@@ -43,7 +43,7 @@ hash_file <- file.path(docs_folder, ".docs_hash.csv")
 rmd_files <- tibble(
   type = "RMarkdown", 
   target_folder = rmd_docs_folder,
-  source_file = c("OM18_taxa_assignment.Rmd")
+  source_file = c("OM14_dada2_ASV_table_generation.Rmd", "OM15_dada2_ASV_table_generation.Rmd", "OM16_dada2_ASV_table_generation.Rmd", "OM14_taxa_assignment.Rmd", "OM15_taxa_assignment.Rmd", "OM16_taxa_assignment.Rmd")
   # , "OM17_dada2_ASV_table_generation.Rmd", "OM17_taxa_assignment.Rmd", "OM19_dada2_ASV_table_generation.Rmd")
   # source_file = list.files(
   #   path = ".", 

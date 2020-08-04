@@ -3,7 +3,7 @@ WAB71_2016	TGGGACATATCC	AA	NA	groundwater	DNA	WAB71	2016	2	28	50	NA	open borehol
 WAB188_2016	CACCTCCAAGGT	AA	NA	groundwater	DNA	WAB188	2016	3	2	30	NA	open borehole pumping - Grundfos submersible	NA	NA	NA	NA	78.0	78.0	1.0	34.5-51	7.9
 WAB56_2016	CTAAATACCCTT	AA	NA	groundwater	DNA	WAB56	2016	3	4	50	NA	open borehole pumping - Grundfos submersible	NA	NA	NA	NA	106.0	106.0	1.0	7-27	6.7
 WAB104_2016	TACGTTTGGCGA	AA	NA	groundwater	DNA	WAB104	2016	2	29	70	NA	open borehole pumping - Grundfos submersible	NA	NA	NA	NA	120.4	120.4	1.0	100.8-104	32.9
-WAB12_2016	GTTGTATTATAC	AA	NA	groundwater	DNA	WAB12	2012	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA	NA
+WAB12_2016	GTTGTATTATAC	AA	NA	groundwater	DNA	WAB12	2016	3	3	50	NA	open borehole pumping - Grundfos submersible	NA	NA	NA	NA	77	65.5	1.0	17.5-65.5	42.9
 WAB55_2016	CTCCTGTCCGGA	AA	NA	groundwater	DNA	WAB55	2016	3	4	50	NA	open borehole pumping - Grundfos submersible	NA	NA	NA	NA	102.0	102.0	1.0	8-97	6.7
 WAB103_2016	AGCCTGGTACCT	AA	NA	groundwater	DNA	WAB103	2016	3	1	50	NA	open borehole pumping - Grundfos submersible	NA	NA	NA	NA	101.0	101.0	1.0	90-98	15.24
 NSHQ10_2016	GGAAGCTTAACT	AA	NA	groundwater	DNA	NSHQ10	2016	3	5	50	NA	open borehole pumping - Grundfos submersible	NA	NA	NA	NA	304.0	5.8	1.0	open below casing	14.3

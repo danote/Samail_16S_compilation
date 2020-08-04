@@ -1,0 +1,607 @@
+---
+---
+---
+title: "DADA2 ASV table generation from 16S rRNA gene sequences of DNA from Oman samples collected in 2015"
+subtitle: "Source file: OM15_dada2_ASV_table_generation.Rmd"
+author: "Daniel Nothaft"
+date: "`r format(Sys.Date(), '%d %b %Y')`"
+output:
+  html_document: 
+    df_print: paged # omit to disable paged data table output
+    css: stylesheet.css # omit if no need for custom stylesheet
+    number_sections: yes # change to no for unnumbered sections
+    toc: yes # change to no to disable table of contents
+    toc_float: true # change to false to keep toc at the top
+    toc_depth: 3 # change to specify which headings to include in toc
+    code_folding: show # change to hide to hide code by default
+editor_options:
+  chunk_output_type: inline
+---
+
+# Setup
+## Load functions and set directories
+Set knitting options
+```{r knitting-options}
+# global knitting options for automatic saving of all plots as .png and .pdf. Also sets cache directory.
+knitr::opts_chunk$set(
+  dev = c("png", "pdf"), fig.keep = "all",
+  dev.args = list(pdf = list(encoding = "WinAnsi", useDingbats = FALSE)),
+  fig.path = file.path("fig_output/", paste0(gsub("\\.[Rr]md", "/", knitr::current_input()))),
+  cache.path = file.path("cache/", paste0(gsub("\\.[Rr]md", "/", knitr::current_input())))
+)
+```
+Load packages
+```{r load-packages, message=FALSE, warning=FALSE}
+library(dada2); packageVersion("dada2") # sequence filtering and sample inference with dada2
+library(ShortRead); packageVersion("ShortRead") # package for loading, displaying, and handling sequences
+library(tidyverse); packageVersion("tidyverse") # handy piping and data operations
+library(rjson); packageVersion("rjson") # read json output from figaro
+```
+
+```{r source}
+# source all relevant scripting files
+# paths.R contains paths to local data and programs
+source(file.path("scripts", "paths.R"))
+```
+
+Set directories
+````{r set-project-dir}
+# Set up names of sub directories to stay organized
+preprocess_path <- file.path(project_path_OM15, "01_preprocess")
+    demultiplex_path <- file.path(preprocess_path, "demultiplexed")
+        demultiplex_stats_path <- file.path(demultiplex_path, "stats") # statistical summary output from idemp
+        demultiplex_unassigned_path <- file.path(demultiplex_path, "unassigned")
+        demultiplex_assigned_path <- file.path(demultiplex_path, "assigned")
+    figaro_output_path <- file.path(preprocess_path, "Figaro_output")
+filter_path <- file.path(project_path_OM15, "02_filter") 
+````
+
+## Organize and rename demultiplexing output files
+
+```{r get-demux-output-raw-names}
+(demux_output_raw_names <- sort(list.files(demultiplex_path, full.names = FALSE)))
+```
+
+Now we read in the names of the demultiplexed and assigned fastq files.
+```{r read-fastq-files}
+fnFs_raw_names <- sort(list.files(demultiplex_assigned_path, pattern = "R1", full.names = TRUE))
+fnRs_raw_names <- sort(list.files(demultiplex_assigned_path, pattern = "R2", full.names = TRUE))
+```
+
+Extract sample names for later use
+```{r extract-original-sample-names}
+# Extract sample names
+sample_names_F <- fnFs_raw_names %>% basename() %>% str_remove("Undetermined_S0_L001_R1_001.fastq.gz_") %>% str_remove(".fastq.gz")
+
+sample_names_R <- fnRs_raw_names %>% basename() %>% str_remove("Undetermined_S0_L001_R2_001.fastq.gz_") %>% str_remove(".fastq.gz")
+
+# Check that forward and reverse file names match
+if(!identical(sample_names_F, sample_names_R)) stop("Forward and reverse file names do not match.")
+
+# print first few names
+sample_names_F %>% head()
+
+# Repeat the above with reverse reads
+R1_names_incremented <- vector("character", length(sample_names_F))
+for (i in seq_along(R1_names_incremented )) {
+  R1_names_incremented[[i]] <- paste0(sample_names_F[[i]], "_S", i, "_L001_R1_001.fastq.gz")
+}
+
+# Now, rename files
+file.rename(from = fnFs_raw_names, to = file.path(demultiplex_assigned_path, R1_names_incremented))
+
+fnFs <- sort(list.files(demultiplex_assigned_path, pattern = "R1", full.names = TRUE)) # re-assign full names of forward reads, now with Illumina naming convention for use with Figaro.
+
+# Print first few lines of fnFs
+fnFs %>% head()
+
+# Repeat the above with reverse reads
+R2_names_incremented <- vector("character", length(sample_names_R))
+for (i in seq_along(R2_names_incremented )) {
+  R2_names_incremented[[i]] <- paste0(sample_names_R[[i]], "_S", i, "_L001_R2_001.fastq.gz")
+}
+
+file.rename(from = fnRs_raw_names, to = file.path(demultiplex_assigned_path, R2_names_incremented))
+
+fnRs <- sort(list.files(demultiplex_assigned_path, pattern = "R2", full.names = TRUE))
+```
+
+Count and display reads for input
+```{r count-input-reads}
+# count forward reads
+input_read_count_F <- countLines(demultiplex_assigned_path, pattern="_R1_001.fastq")/4
+
+# make forward read counts into tbl with sample name
+input_read_count_F_tbl <- input_read_count_F %>% as_tibble(rownames = "file_name") %>% rename(reads_F = value) %>% mutate(sample_id = file_name %>% str_remove(pattern = "_S([[:digit:]]+)_L001_R1_001.fastq.gz"))
+
+# repeat for reverse
+
+input_read_count_R <- countLines(demultiplex_assigned_path, pattern="_R2_001.fastq")/4
+
+input_read_count_R_tbl <- input_read_count_R %>% as_tibble(rownames = "file_name") %>% rename(reads_R = value) %>% mutate(sample_id = file_name %>% str_remove(pattern = "_S([[:digit:]]+)_L001_R2_001.fastq.gz"))
+
+
+# Join forward and reverse together into one tbl
+input_read_count_FR <- input_read_count_F_tbl %>% select(-file_name) %>% left_join(input_read_count_R_tbl %>% select(-file_name), by = "sample_id") %>% select(sample_id, everything())
+
+# print. reads counts are same in forward and reverse, which is what we want.
+input_read_count_FR
+```
+Plot read counts
+```{r plot-input-reads, fig.width=10, fig.height=4}
+plot_read_count_input <- input_read_count_FR %>% ggplot(aes(
+  x = fct_reorder(sample_id, desc(reads_F)),
+  y = reads_F
+)) +
+  geom_bar(stat = "identity") +
+  scale_y_continuous(name = "Forward reads") +
+  scale_x_discrete(name = "Sample ID") +
+  theme_classic(base_size = 9)+
+  theme(
+    axis.text.x = element_text(angle = 90, vjust = .5, hjust = 1),
+    legend.position = "bottom"
+  )
+
+plot_read_count_input
+```
+
+# Check primer sequences
+
+```{r}
+sread(readFastq(fnFs[1]))
+```
+
+
+The 515 (forward) (Caporaso) and 806R (reverse) (Caporaso) primers ([EarthMicrobiome](https://earthmicrobiome.org/protocols-and-standards/16s/)) were used to amplify this dataset. We record the DNA sequences for those primers.
+
+However, the sequencing strategy used here is not supposed to sequence the primers.
+```{r primers-515F–806R, warning=FALSE, message=FALSE}
+FWD <- "GTGCCAGCMGCCGCGGTAA" # 515F (Caporaso)
+REV <- "GGACTACHVGGGTWTCTAAT" # 806R (Caporaso)
+
+(FWD_length <- str_length(FWD))
+(REV_length <- str_length(REV))
+```
+
+That said, let's check for any primer sequence matches in the sequences.
+
+```{r Primer-function, warning=FALSE, message=FALSE, tidy=TRUE}
+allOrients <- function(primer){ # Create all orientations of the input sequence
+  require(Biostrings)
+  dna <- DNAString(primer) # The Biostrings works w/ DNAString objects rather than character vectors
+  orients <- c(Forward=dna, Complement=complement(dna), Reverse=reverse(dna), RevComp=reverseComplement(dna))
+  return(sapply(orients, toString)) # Convert back to character vector
+}
+FWD.orients <- allOrients(FWD)
+REV.orients <- allOrients(REV)
+FWD.orients
+```
+
+We are now ready to count the number of times the primers appear in the forward and reverse read, while considering all possible primer orientations. Identifying and counting the primers on one set of paired end FASTQ files is sufficient, assuming all the files were created using the same library preparation, so we'll just process the first sample.
+
+```{r primerHits}
+# write function to check for primer sequences
+primerHits <- function(primer, fn) { # Counts number of reads in which the primer is found
+    nhits <- vcountPattern(primer, sread(readFastq(fn)), fixed = FALSE)
+    return(sum(nhits > 0))
+}
+```
+
+```{r count-primers-1}
+# print file name
+print(paste("file_name: ", basename(fnFs[[1]])))
+
+print(paste("total reads:", countLines(fnFs[[1]])/4))
+
+# check for primers
+rbind(FWD.ForwardReads = sapply(FWD.orients, primerHits, fn=fnFs[[1]]),
+      FWD.ReverseReads = sapply(FWD.orients, primerHits, fn=fnRs[[1]]),
+      REV.ForwardReads = sapply(REV.orients, primerHits, fn=fnFs[[1]]),
+      REV.ReverseReads = sapply(REV.orients, primerHits, fn=fnRs[[1]]))
+```
+
+```{r count-primers-2}
+# print file name
+print(paste("file_name: ", basename(fnFs[[2]])))
+
+print(paste("total reads:", countLines(fnFs[[2]])/4))
+
+# check for primers
+rbind(FWD.ForwardReads = sapply(FWD.orients, primerHits, fn=fnFs[[2]]),
+      FWD.ReverseReads = sapply(FWD.orients, primerHits, fn=fnRs[[2]]),
+      REV.ForwardReads = sapply(REV.orients, primerHits, fn=fnFs[[2]]),
+      REV.ReverseReads = sapply(REV.orients, primerHits, fn=fnRs[[2]]))
+```
+
+There were a few (<40) detections of FWD primer sequences in the reverse reads in its reverse-complement orientation, and vice verse for the REV primer. We will check if primer sequences are still found later after we truncate lower quality reads. So now let's inspect read quality profiles.
+
+# Inspect read quality profiles
+It's important to get a feel for the quality of the data that we are using. To do this, we will plot the quality of some of the samples.
+
+*From the dada2 tutorial:*
+>In gray-scale is a heat map of the frequency of each quality score at each base position. The median quality score at each position is shown by the green line, and the quartiles of the quality score distribution by the orange lines. The red line shows the scaled proportion of reads that extend to at least that position (this is more useful for other sequencing technologies, as Illumina reads are typically all the same lenghth, hence the flat red line).
+
+````{r plot-qual-R1, fig.width = 13, fig.height = 7}
+# Forward reads
+# If the number of samples is 20 or less, plot them all, otherwise, just plot 20 randomly selected samples
+if( length(fnFs) <= 20) {
+  plotQualityProfile(fnFs)
+} else {
+  rand_samples <- sample(size = 20, 1:length(fnFs)) # grab 20 random samples to plot
+  plotQualityProfile(fnFs[rand_samples])
+}
+````
+
+````{r plot-qual-R2, fig.width = 13, fig.height = 7}
+# Reverse reads
+# If the number of samples is 20 or less, plot them all, otherwise, just plot 20 randomly selected samples
+if( length(fnRs) <= 20) {
+  plotQualityProfile(fnRs)
+} else {
+  rand_samples <- sample(size = 20, 1:length(fnRs)) # grab 20 random samples to plot
+  plotQualityProfile(fnRs[rand_samples])
+}
+````
+
+# Filter parameter optimization with Figaro
+Create a directory for Figaro output
+```{r create-dir-figaro}
+# Create directory to hold the output from figaro
+if (!dir.exists(figaro_output_path)) dir.create(figaro_output_path)
+```
+I couldn't get figaro (v1.1.1) to run by system2() in R due to a shell permission denied error, but it worked on the command line.
+This chunk generates the exact text I entered in the command line after changing to the figaro directory. I then just read in the figaro output JSON and continue from there.
+```{r cd-figaro}
+# text to change directory in terminal to figaro 
+paste("cd", figaro_path) %>% str_remove("/figaro.py") %>% cat()
+```
+
+```{r figaro}
+# primers were not sequenced
+# sequences are 1X150 bp
+# Tried 240, lost nearly all reads at merge step.
+# Try again with 260
+figaro_amplicon_length <- 260
+
+figaro_min_overlap <- 20
+
+figaro_output_file_name <- "Figaro_params_OM15.json"
+
+# using 1 for primer lengths because even though primers were not sequenced, the current version of figaro does not allow 0 as a primer length.
+
+flags_figaro <- paste("--ampliconLength", figaro_amplicon_length, "--forwardPrimerLength", 1, "--reversePrimerLength", 1, "--outputFileName", figaro_output_file_name, "--inputDirectory", demultiplex_assigned_path, "--outputDirectory", figaro_output_path, "--minimumOverlap", figaro_min_overlap)
+
+paste("python3", "figaro.py", flags_figaro) %>% cat()
+```
+
+Read in Figaro JSON output, top 5 suggested trim parameters.
+```{r read-figaro-json}
+# Give the input file name to the function.
+figaro_result <- fromJSON(file = file.path(figaro_output_path, figaro_output_file_name))
+
+figaro_result[1:5] %>% paste(collapse = '\n') %>% cat()
+```
+
+```{r save-figaro-best-params}
+# Save and print Figaro-suggested parameters for dada2::filterAndTrim
+(truncLen_best_figaro <- figaro_result[[1]]$trimPosition)
+
+(maxEE_best_figaro <- figaro_result[[1]]$maxExpectedError)
+```
+
+# Filter and trim for quality
+
+## Organize file paths and directories
+````{r set-filtering-file-paths}
+# set file path for quality-filtered read
+filter_path <- file.path(project_path_OM15, "02_filter") 
+
+# Put filtered reads into separate sub-directories for big data workflow
+
+if (!dir.exists(filter_path)) dir.create(filter_path)
+    subF_path <- file.path(filter_path, "preprocessed_F") 
+    subR_path <- file.path(filter_path, "preprocessed_R") 
+if (!dir.exists(subF_path)) dir.create(subF_path)
+if (!dir.exists(subR_path)) dir.create(subR_path)
+    
+# Move demultiplexed and assigned R1 and R2 to separate forward/reverse sub-directories
+
+fnFs.Q <- file.path(subF_path,  basename(list.files(demultiplex_assigned_path , pattern="R1", full.names = TRUE))) 
+fnRs.Q <- file.path(subR_path,  basename(list.files(demultiplex_assigned_path , pattern="R2", full.names = TRUE)))
+
+file.rename(from = list.files(demultiplex_assigned_path , pattern="R1", full.names = TRUE), to = fnFs.Q)
+file.rename(from = list.files(demultiplex_assigned_path , pattern="R2", full.names = TRUE), to = fnRs.Q)
+
+# File parsing; create file names and make sure that forward and reverse files match
+filtpathF <- file.path(subF_path, "filtered") # files go into preprocessed_F/filtered/
+filtpathR <- file.path(subR_path, "filtered") # ...
+fastqFs <- sort(list.files(subF_path, pattern="fastq.gz"))
+fastqRs <- sort(list.files(subR_path, pattern="fastq.gz"))
+if(length(fastqFs) != length(fastqRs)) stop("Forward and reverse files do not match.")
+````
+
+
+Before chosing sequence variants, we want to trim reads where their quality scores begin to drop (the `truncLen` and `truncQ` values) and remove any low-quality reads that are left over after we have finished trimming (the `maxEE` value).
+
+## Filter and trim
+
+````{r filterAndTrim}
+# No argument pasted to trimLeft because the primers were not sequenced
+filt_out <- filterAndTrim(fwd = file.path(subF_path, fastqFs), filt = file.path(filtpathF, fastqFs), rev = file.path(subR_path, fastqRs), filt.rev = file.path(filtpathR, fastqRs), truncLen = truncLen_best_figaro, maxEE = maxEE_best_figaro, truncQ = 2, maxN = 0, rm.phix = TRUE, compress = TRUE, verbose = TRUE, multithread = TRUE)
+
+# look at how many reads were kept
+head(filt_out)
+
+# summary of samples in filt_out by percentage
+filt_out %>% 
+  data.frame() %>% 
+  mutate(Samples = rownames(.),
+         percent_kept = 100*(reads.out/reads.in)) %>%
+  select(Samples, everything()) %>%
+  summarise(min_remaining = paste0(round(min(percent_kept), 2), "%"), 
+            median_remaining = paste0(round(median(percent_kept), 2), "%"),
+            mean_remaining = paste0(round(mean(percent_kept), 2), "%"), 
+            max_remaining = paste0(round(max(percent_kept), 2), "%"))
+````
+
+## Check if primers were removed by filterAndTrim
+Generate sorted file name vector for filtered files
+```{r}
+fnFs_filt <- sort(list.files(filtpathF, full.names = TRUE))
+
+# print first 6 lines
+fnFs_filt %>% head()
+
+fnRs_filt <- sort(list.files(filtpathR, full.names = TRUE))
+```
+
+```{r count-primers-filtered-1}
+# print file name
+print(paste("file_name: ", basename(fnFs_filt[[1]])))
+
+print(paste("total reads:", countLines(fnFs_filt[[1]])/4))
+
+# tally primer hits in file
+rbind(FWD.ForwardReads = sapply(FWD.orients, primerHits, fn=fnFs_filt[[1]]),
+      FWD.ReverseReads = sapply(FWD.orients, primerHits, fn=fnFs_filt[[1]]),
+      REV.ForwardReads = sapply(REV.orients, primerHits, fn=fnFs_filt[[1]]),
+      REV.ReverseReads = sapply(REV.orients, primerHits, fn=fnFs_filt[[1]]))
+```
+
+```{r count-primers-filtered-2}
+# print file name
+print(paste("file_name: ", basename(fnFs_filt[[2]])))
+
+print(paste("total reads:", countLines(fnFs_filt[[2]])/4))
+
+# tally primer hits in file
+rbind(FWD.ForwardReads = sapply(FWD.orients, primerHits, fn=fnFs_filt[[2]]),
+      FWD.ReverseReads = sapply(FWD.orients, primerHits, fn=fnFs_filt[[2]]),
+      REV.ForwardReads = sapply(REV.orients, primerHits, fn=fnFs_filt[[2]]),
+      REV.ReverseReads = sapply(REV.orients, primerHits, fn=fnFs_filt[[2]]))
+```
+
+```{r count-primers-filtered-3}
+# print file name
+print(paste("file_name: ", basename(fnFs_filt[[3]])))
+
+print(paste("total reads:", countLines(fnFs_filt[[3]])/4))
+
+# tally primer hits in file
+rbind(FWD.ForwardReads = sapply(FWD.orients, primerHits, fn=fnFs_filt[[3]]),
+      FWD.ReverseReads = sapply(FWD.orients, primerHits, fn=fnFs_filt[[3]]),
+      REV.ForwardReads = sapply(REV.orients, primerHits, fn=fnFs_filt[[3]]),
+      REV.ReverseReads = sapply(REV.orients, primerHits, fn=fnFs_filt[[3]]))
+```
+
+Primer sequences appear in ~1 in every 10 000 reads. At such low primer counts, additional filtering of primers is probably not needed, and won't be performed here.
+
+## Plot the quality of the filtered and cut fastq files.
+
+````{r plot-qual-R1-filt, fig.width = 13, fig.height = 7}
+# Forward reads
+# If the number of samples is 20 or less, plot them all, otherwise, just plot 20 randomly selected samples
+if( length(fnFs_filt) <= 20) {
+  plotQualityProfile(fnFs_filt)
+} else {
+  rand_samples <- sample(size = 20, 1:length(fnFs_filt)) # grab 20 random samples to plot
+  plotQualityProfile(fnFs_filt[rand_samples])
+}
+````
+
+````{r plot-qual-R2-filt, fig.width = 13, fig.height = 7}
+# Forward reads
+# If the number of samples is 20 or less, plot them all, otherwise, just plot 20 randomly selected samples
+if( length(fnFs_filt) <= 20) {
+  plotQualityProfile(fnFs_filt)
+} else {
+  rand_samples <- sample(size = 20, 1:length(fnFs_filt)) # grab 20 random samples to plot
+  plotQualityProfile(fnFs_filt[rand_samples])
+}
+````
+
+# Infer sequence variants
+In this part of the pipeline, dada2 will learn to distinguish error from biological 
+differences using a subset of our data as a training set. After it understands the 
+error rates, we will reduce the size of the dataset by combining all identical 
+sequence reads into "unique sequences". Then, using the dereplicated data and 
+error rates, dada2 will infer the sequence variants in our data. Finally, 
+we will merge the corresponding forward and reverse reads to create a list of the 
+fully denoised sequences and create a sequence table from the result.
+
+## Learn the error rates
+
+````{r learn-error-rates}
+set.seed(100) # set seed to ensure that randomized steps are reproducible
+
+# Learn forward error rates
+errF <- learnErrors(fnFs_filt, nbases=1e8, multithread=TRUE)
+
+# Learn reverse error rates
+errR <- learnErrors(fnRs_filt, nbases=1e8, multithread=TRUE)
+````
+
+### Plot Error Rates
+The error rates for each possible transition (A→C, A→G, …) are shown. Points are the observed error rates for each consensus quality score. The black line shows the estimated error rates after convergence of the machine-learning algorithm. The red line shows the error rates expected under the nominal definition of the Q-score. Here, we want to see estimated error rates (black line) that are a good fit to the observed rates (points), and that the error rates drop with increased quality as expected. If these criteria aren't observed, then it may be a good idea to increase the ```nbases``` parameter. This allows the machine learning algorithm to train on a larger portion of your data and may help improve the fit.
+
+````{r plotErrors-f}
+plotErrors(errF, nominalQ=TRUE)
+```
+
+````{r plotErrors-R}
+plotErrors(errR, nominalQ=TRUE)
+````
+
+## Dereplication, sequence inference, and merging of paired-end reads
+Extract sample names and add them to vector of filtered file names
+```{r extract-sample-names}
+# Extract sample names, assuming filenames have format: SAMPLENAME_XXX.fastq
+sample_names_F_filt <- fnFs_filt %>% basename() %>% str_remove(pattern = "_S([[:digit:]]+)_L001_R1_001.fastq.gz")
+sample_names_R_filt <- fnRs_filt %>% basename() %>% str_remove(pattern = "_S([[:digit:]]+)_L001_R2_001.fastq.gz")
+
+# Double check
+if(!identical(sample_names_F_filt, sample_names_R_filt)) stop("Forward and reverse files do not match.")
+
+names(fnFs_filt) <- sample_names_F_filt
+names(fnRs_filt) <- sample_names_R_filt
+```
+
+````{r derep-dada}
+# make lists to hold the loop output
+mergers <- vector("list", length(sample_names_F))
+names(mergers) <- sample_names_F
+ddF <- vector("list", length(sample_names_F))
+names(ddF) <- sample_names_F
+ddR <- vector("list", length(sample_names_F))
+names(ddR) <- sample_names_F
+
+# For each sample, get a list of merged and denoised sequences
+for(sam in sample_names_F) {
+    cat("Processing:", sam, "\n")
+    # Dereplicate forward reads
+    derepF <- derepFastq(fnFs_filt[[sam]])
+    # Infer sequences for forward reads
+    ddF[[sam]] <- dada(derepF, err=errF, multithread=TRUE)
+    # Dereplicate reverse reads
+    derepR <- derepFastq(fnRs_filt[[sam]])
+    # Infer sequences for reverse reads
+    ddR[[sam]] <- dada(derepR, err=errR, multithread=TRUE)
+    # Merge reads together
+    merger <- mergePairs(ddF[[sam]], derepF, ddR[[sam]], derepR)
+    mergers[[sam]] <- merger
+}
+
+rm(derepF); rm(derepR)
+````
+
+## Construct sequence table
+
+````{r construct-seqtab}
+seqtab <- makeSequenceTable(mergers)
+```
+
+```{r write-seqtab}
+write_rds(seqtab, path = format(Sys.Date(), "data_output/seqtab_OM15_processed_%Y%m%d.rds"), compress = "gz")
+```
+
+# Remove Chimeras
+Although dada2 has searched for insertion/deletion errors and substitutions, there may still be chimeric
+sequences in our dataset (sequences that are derived from forward and reverse sequences from 
+two different organisms becoming fused together during PCR and/or sequencing). To identify 
+chimeras, we will search for rare sequence variants that can be reconstructed by combining
+left-hand and right-hand segments from two more abundant "parent" sequences.
+
+````{r rm-chimeras}
+# Remove chimeras
+seqtab_nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE)
+```
+
+````{r percent-non-chimeric}
+# Print percentage of our sequences that were not chimeric.
+100*sum(seqtab_nochim)/sum(seqtab)
+```
+
+```{r write-seqtab-nochim}
+write_rds(seqtab_nochim, path = format(Sys.Date(), "data_output/seqtab_nochim_OM15_processed_%Y%m%d.rds"), compress = "gz")
+```
+
+# Track reads through pipeline
+```{r track}
+getN <- function(x) sum(getUniques(x)) # function to grab sequence counts from output objects
+# tracking reads by counts
+filt_out_track <- filt_out %>%
+  data.frame() %>%
+  mutate(Sample = rownames(.) %>% str_remove(pattern = "_S([[:digit:]]+)_L001_R1_001.fastq.gz")) %>%
+  rename(input = reads.in, filtered = reads.out)
+rownames(filt_out_track) <- filt_out_track$Sample
+
+ddF_track <- data.frame(denoisedF = sapply(ddF[sample_names_F_filt], getN)) %>%
+  mutate(Sample = row.names(.))
+ddR_track <- data.frame(denoisedR = sapply(ddR[sample_names_F_filt], getN)) %>%
+  mutate(Sample = row.names(.))
+merge_track <- data.frame(merged = sapply(mergers, getN)) %>%
+  mutate(Sample = row.names(.))
+chim_track <- data.frame(nonchim = rowSums(seqtab_nochim)) %>%
+  mutate(Sample = row.names(.))
+
+track <- left_join(filt_out_track, ddF_track, by = "Sample") %>%
+  # left_join(ddF_track, by = "Sample") %>%
+  left_join(ddR_track, by = "Sample") %>%
+  left_join(merge_track, by = "Sample") %>%
+  left_join(chim_track, by = "Sample") %>%
+  replace(., is.na(.), 0) %>%
+  select(Sample, everything())
+row.names(track) <- track$Sample
+head(track)
+
+# tracking reads by percentage
+track_pct <- track %>% 
+  data.frame() %>%
+  mutate(Sample = rownames(.),
+         filtered_pct = ifelse(filtered == 0, 0, 100 * (filtered/input)),
+          # cut_pct = ifelse(cut == 0, 0, 100 * (cut/filtered)),
+         denoisedF_pct = ifelse(denoisedF == 0, 0, 100 * (denoisedF/filtered)),
+         denoisedR_pct = ifelse(denoisedR == 0, 0, 100 * (denoisedR/filtered)),
+         merged_pct = ifelse(merged == 0, 0, 100 * merged/((denoisedF + denoisedR)/2)),
+         nonchim_pct = ifelse(nonchim == 0, 0, 100 * (nonchim/merged)),
+         total_pct = ifelse(nonchim == 0, 0, 100 * nonchim/input)) %>%
+  select(Sample, ends_with("_pct"))
+
+# summary stats of tracked reads averaged across samples
+track_pct_avg <- track_pct %>% summarize_at(vars(ends_with("_pct")), 
+                                            list(avg = mean))
+head(track_pct_avg)
+
+
+track_pct_med <- track_pct %>% summarize_at(vars(ends_with("_pct")), 
+                                            list(avg = stats::median))
+head(track_pct_avg)
+
+head(track_pct_med)
+
+# Plotting each sample's reads through the pipeline
+track_plot <- track %>% 
+  pivot_longer(-Sample, names_to = "Step", values_to = "Reads") %>% 
+  mutate(Step = factor(Step, 
+                       levels = c("input", "filtered", "denoisedF", "denoisedR", "merged", "nonchim"))) %>%
+  ggplot(aes(x = Step, y = Reads)) +
+  geom_line(aes(group = Sample), alpha = 0.2) +
+  geom_point(alpha = 0.5, position = position_jitter(width = 0)) + 
+  stat_summary(fun = median, geom = "line", group = 1, color = "steelblue", size = 1, alpha = 0.5) +
+  stat_summary(fun = median, geom = "point", group = 1, color = "steelblue", size = 2, alpha = 0.5) +
+  stat_summary(fun.data = median_hilow, fun.args = list(conf.int = 0.5), 
+               geom = "ribbon", group = 1, fill = "steelblue", alpha = 0.2) +
+  geom_label(data = t(track_pct_avg[1:5]) %>% data.frame() %>% 
+               rename(Percent = 1) %>%
+               mutate(Step = c("filtered", "denoisedF", "denoisedR", "merged", "nonchim"),
+                      Percent = paste(round(Percent, 2), "%")),
+             aes(label = Percent), y = 1.1 * max(track[,2])) +
+  geom_label(data = track_pct_avg[6] %>% data.frame() %>%
+               rename(total = 1),
+             aes(label = paste("Total\nRemaining:\n", round(track_pct_avg[1,6], 2), "%")), 
+             y = mean(track[,6]), x = 6.6) +
+  expand_limits(y = 1.1 * max(track[,2]), x = 7.2) +
+  theme_classic()
+
+track_plot
+```

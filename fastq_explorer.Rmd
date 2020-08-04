@@ -32,36 +32,9 @@ source(file.path("scripts", "paths.R"))
 # Read 1
 
 ```{r}
-R1 <- readFastq(R1_path_OM14)
-```
-
-
-
-```{r}
-sread(R1)[1:10]
+I1 <- readFastq(I1_path_OM14)
 ```
 
 ```{r}
-sread(R1)[11:20]
-```
-
-```{r}
-sread(R1)[21:30]
-```
-
-
-```{r}
-sread(R1)
-```
-
-^some of the forward reads match barcodes
-
-# Read 2
-
-```{r}
-R2 <- readFastq(R2_path_OM14)
-```
-
-```{r}
-sread(R2)
+sread(I1)[1:10]
 ```

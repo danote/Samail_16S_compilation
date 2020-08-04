@@ -1,0 +1,100 @@
+---
+---
+---
+title: "Demultipexing of 16S rRNA gene sequences of DNA from Oman samples collected in 2015"
+subtitle: "Source file: OM15_seq_prep.Rmd"
+author: "Daniel Nothaft"
+date: "`r format(Sys.Date(), '%d %b %Y')`"
+output:
+  html_document: 
+    df_print: paged # omit to disable paged data table output
+    css: stylesheet.css # omit if no need for custom stylesheet
+    number_sections: yes # change to no for unnumbered sections
+    toc: yes # change to no to disable table of contents
+    toc_float: true # change to false to keep toc at the top
+    toc_depth: 3 # change to specify which headings to include in toc
+    code_folding: show # change to hide to hide code by default
+editor_options:
+  chunk_output_type: inline
+---
+
+# Setup
+
+Set knitting options
+```{r knitting-options}
+# global knitting options for automatic saving of all plots as .png and .pdf. Also sets cache directory.
+knitr::opts_chunk$set(
+  dev = c("png", "pdf"), fig.keep = "all",
+  dev.args = list(pdf = list(encoding = "WinAnsi", useDingbats = FALSE)),
+  fig.path = file.path("fig_output/", paste0(gsub("\\.[Rr]md", "/", knitr::current_input()))),
+  cache.path = file.path("cache/", paste0(gsub("\\.[Rr]md", "/", knitr::current_input())))
+)
+```
+
+```{r source}
+# source all relevant scripting files
+# paths.R contains paths to local data and programs
+source(file.path("scripts", "paths.R"))
+```
+
+Test idemp
+````{r test-idemp}
+(idemp_messages_1 <- system2(idemp_path, stdout = TRUE, stderr = TRUE)) # Check that idemp is in your path and you can run shell commands from R
+```
+
+| <span> |
+| :--- | 
+| **NOTE:** idemp relies on having a match in length between the index file and and the barcode sequences. Since the index file usually includes a extra linker basepair (making it 13bp long), you should append the barcode sequences with "N" to make sure each is 13bp long. If you are not sure of the length of index reads, check with the sequencing center. If your index reads are 12bp long, you do NOT need to add an "N". |
+| <span> |
+
+Set up file paths in YOUR directory where you want data; 
+you do not need to create the subdirectories but they are nice to have
+for organizational purposes. 
+
+````{r set-project-dir}
+# Set up names of sub directories to stay organized
+preprocess_path <- file.path(project_path_OM15, "01_preprocess")
+    demultiplex_path <- file.path(preprocess_path, "demultiplexed")
+      demultiplex_stats_path <- file.path(demultiplex_path, "stats")  
+      demultiplex_assigned_path <- file.path(demultiplex_path, "assigned")
+      demultiplex_unassigned_path <- file.path(demultiplex_path, "unassigned")
+
+# make directories
+if(!dir.exists(preprocess_path)) dir.create(preprocess_path)
+if(!dir.exists(demultiplex_path)) dir.create(demultiplex_path)
+if(!dir.exists(demultiplex_stats_path)) dir.create(demultiplex_stats_path)
+if(!dir.exists(demultiplex_unassigned_path)) dir.create(demultiplex_unassigned_path)
+if(!dir.exists(demultiplex_assigned_path)) dir.create(demultiplex_assigned_path)
+````
+
+# Demultiplex
+## Call the demultiplexing script
+Demultiplexing splits your reads out into separate files based on the barcodes associated with each sample. 
+
+````{r idemp}
+allowed_mismatches_demux <- "1" # allowed base mismatches. I use 1, which is the idemp default. Note: this should be of character class, not a number/double.
+
+flags <- paste("-b", barcode_path_OM15, "-I1", I1_path_OM15, "-R1", R1_path_OM15, "-R2", R2_path_OM15, "-m",  allowed_mismatches_demux, "-o", demultiplex_path) 
+(idemp_messages_2 <- system2(idemp_path, args = flags, stdout = TRUE, stderr = TRUE))
+```
+
+````{r print-demux-output-file-names}
+# Look at output of demultiplexing
+list.files(demultiplex_path)
+````
+
+## Separate assigned and unassigned fastqs for downstream processing
+
+```{r idemp-cleanup}
+# Move idemp demultiplex stats to their own directory
+file.rename(from = list.files(demultiplex_path, pattern = "decode", full.names = TRUE), to =
+            paste0(demultiplex_stats_path, "/", list.files(demultiplex_path, pattern = "decode", full.names = FALSE)))
+
+# Move unassigned reads to their own directory
+file.rename(from = list.files(demultiplex_path, pattern = "unsigned", full.names = TRUE), to =
+            paste0(demultiplex_unassigned_path, "/", list.files(demultiplex_path, pattern = "unsigned", full.names = FALSE)))
+
+# Move assigned reads to their own directory
+file.rename(from = list.files(demultiplex_path, pattern = "fastq", full.names = TRUE), to = 
+            paste0(demultiplex_assigned_path, "/", list.files(demultiplex_path, pattern = "fastq", full.names = FALSE)))
+````

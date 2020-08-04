@@ -13,11 +13,11 @@ ref_database_species_path <- "/Users/melo.d/Desktop/Boulder/2018_fall/molecular_
 #' Set path to shared data folder and contents
 data_path_OM14 <- "/Users/melo.d/Desktop/Research/Oman_fieldwork/Samail_16S_compilation_supporting_files/2014"
 # Set file paths for barcodes file, map file, and fastqs
-barcode_path_OM14 <- file.path(data_path_OM14, "barcodes_OM14.fasta")
+barcode_path_OM14 <- file.path(data_path_OM14, "barcode_demultiplex_short.txt")
 # map_path_OM14 <- file.path(data_path_OM14, "oman_map16S.txt")
-# I1.fp <- file.path(data.fp, "Undetermined_S0_L001_I1_001.fastq.gz")
-R1_path_OM14 <- file.path(data_path_OM14, "Oman_2014_seqs_1.fq")
-R2_path_OM14 <- file.path(data_path_OM14, "Oman_2014_seqs_2.fq")
+I1_path_OM14 <- file.path(data_path_OM14, "Undetermined_S0_L001_I1_001.fastq.gz")
+R1_path_OM14 <- file.path(data_path_OM14, "Undetermined_S0_L001_R1_001.fastq.gz")
+R2_path_OM14 <- file.path(data_path_OM14, "Undetermined_S0_L001_R2_001.fastq.gz")
 project_path_OM14 <- "/Users/melo.d/Desktop/Research/Oman_fieldwork/Samail_16S_compilation_fq_outputs/2014"
 
 
@@ -25,22 +25,22 @@ project_path_OM14 <- "/Users/melo.d/Desktop/Research/Oman_fieldwork/Samail_16S_c
 #' Set path to shared data folder and contents
 data_path_OM15 <- "/Users/melo.d/Desktop/Research/Oman_fieldwork/Samail_16S_compilation_supporting_files/2015"
 # Set file paths for barcodes file, map file, and fastqs
-barcode_path_OM15 <- file.path(data_path_OM15, "barcodes_OM15_anchored_5_prime.fasta")
+barcode_path_OM15 <- file.path(data_path_OM15, "barcode_demultiplex_short.txt")
 # map_path_OM15 <- file.path(data_path_OM15, "oman_map16S.txt")
-# I1.fp <- file.path(data.fp, "Undetermined_S0_L001_I1_001.fastq.gz")
-R1_path_OM15 <- file.path(data_path_OM15, "Oman_2015_seqs_1.fq")
-R2_path_OM15 <- file.path(data_path_OM15, "Oman_2015_seqs_2.fq")
+I1_path_OM15 <- file.path(data_path_OM15, "Undetermined_S0_L001_I1_001.fastq.gz")
+R1_path_OM15 <- file.path(data_path_OM15, "Undetermined_S0_L001_R1_001.fastq.gz")
+R2_path_OM15 <- file.path(data_path_OM15, "Undetermined_S0_L001_R2_001.fastq.gz")
 project_path_OM15 <- "/Users/melo.d/Desktop/Research/Oman_fieldwork/Samail_16S_compilation_fq_outputs/2015"
 
 ### 2016 ###
 #' Set path to shared data folder and contents
 data_path_OM16 <- "/Users/melo.d/Desktop/Research/Oman_fieldwork/Samail_16S_compilation_supporting_files/2016"
 # Set file paths for barcodes file, map file, and fastqs
-barcode_path_OM16 <- file.path(data_path_OM16, "barcodes_OM16_anchored_5_prime.fasta")
+barcode_path_OM16 <- file.path(data_path_OM16, "barcode_demultiplex_short.txt")
 # map_path_OM16 <- file.path(data_path_OM16, "oman_map16S.txt")
-# I1.fp <- file.path(data.fp, "Undetermined_S0_L001_I1_001.fastq.gz")
-R1_path_OM16 <- file.path(data_path_OM16, "Oman_2016_seqs_1.fq")
-R2_path_OM16 <- file.path(data_path_OM16, "Oman_2016_seqs_2.fq")
+I1_path_OM16 <- file.path(data_path_OM16, "Undetermined_S0_L001_I1_001.fastq.gz")
+R1_path_OM16 <- file.path(data_path_OM16, "Undetermined_S0_L001_R1_001.fastq.gz")
+R2_path_OM16 <- file.path(data_path_OM16, "Undetermined_S0_L001_R2_001.fastq.gz")
 project_path_OM16 <- "/Users/melo.d/Desktop/Research/Oman_fieldwork/Samail_16S_compilation_fq_outputs/2016"
 
 ### 2017 ###

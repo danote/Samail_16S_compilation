@@ -1,5 +1,5 @@
 ---
-title: "Demultipexing and adapter trimming of 16S rRNA gene sequences of DNA from Oman samples collected in 2015"
+title: "Demultipexing of 16S rRNA gene sequences of DNA from Oman samples collected in 2015"
 subtitle: "Source file: OM15_seq_prep.Rmd"
 author: "Daniel Nothaft"
 date: "`r format(Sys.Date(), '%d %b %Y')`"
@@ -29,24 +29,16 @@ knitr::opts_chunk$set(
 )
 ```
 
-Load packages
-```{r load-packages, message=FALSE, warning=FALSE}
-library(dada2); packageVersion("dada2") # sequence filtering and sample inference with dada2
-library(ShortRead); packageVersion("ShortRead") # package for loading, displaying, and handling sequences
-library(tidyverse); packageVersion("tidyverse") # handy piping and data operations
-```
-
 ```{r source}
 # source all relevant scripting files
 # paths.R contains paths to local data and programs
 source(file.path("scripts", "paths.R"))
 ```
 
-Set paths for idemp, cutadapt, and data
-````{r test-programs}
-# Check by cutadapt version
-(cutadapt_messages_1 <- system2(cutadapt_path, args = "--version", stdout = TRUE, stderr = TRUE))
-````
+Test idemp
+````{r test-idemp}
+(idemp_messages_1 <- system2(idemp_path, stdout = TRUE, stderr = TRUE)) # Check that idemp is in your path and you can run shell commands from R
+```
 
 | <span> |
 | :--- | 
@@ -61,86 +53,46 @@ for organizational purposes.
 # Set up names of sub directories to stay organized
 preprocess_path <- file.path(project_path_OM15, "01_preprocess")
     demultiplex_path <- file.path(preprocess_path, "demultiplexed")
+      demultiplex_stats_path <- file.path(demultiplex_path, "stats")  
       demultiplex_assigned_path <- file.path(demultiplex_path, "assigned")
       demultiplex_unassigned_path <- file.path(demultiplex_path, "unassigned")
-    # filtN_path <- file.path(preprocess_path, "filtN")
-    # trimmed_path <- file.path(preprocess_path, "trimmed")
+
+# make directories
+if(!dir.exists(preprocess_path)) dir.create(preprocess_path)
+if(!dir.exists(demultiplex_path)) dir.create(demultiplex_path)
+if(!dir.exists(demultiplex_stats_path)) dir.create(demultiplex_stats_path)
+if(!dir.exists(demultiplex_unassigned_path)) dir.create(demultiplex_unassigned_path)
+if(!dir.exists(demultiplex_assigned_path)) dir.create(demultiplex_assigned_path)
 ````
 
 # Demultiplex
 ## Call the demultiplexing script
 Demultiplexing splits your reads out into separate files based on the barcodes associated with each sample. 
 
-```{r create-dir-demux}
-# Create directory to hold the output from cutadapt
-if (!dir.exists(project_path_OM15)) dir.create(project_path_OM15)
-if (!dir.exists(preprocess_path)) dir.create(preprocess_path)
-if (!dir.exists(demultiplex_path)) dir.create(demultiplex_path)
-if (!dir.exists(demultiplex_assigned_path)) dir.create(demultiplex_assigned_path)
-if (!dir.exists(demultiplex_unassigned_path)) dir.create(demultiplex_unassigned_path)
+````{r idemp}
+allowed_mismatches_demux <- "1" # allowed base mismatches. I use 1, which is the idemp default. Note: this should be of character class, not a number/double.
+
+flags <- paste("-b", barcode_path_OM15, "-I1", I1_path_OM15, "-R1", R1_path_OM15, "-R2", R2_path_OM15, "-m",  allowed_mismatches_demux, "-o", demultiplex_path) 
+(idemp_messages_2 <- system2(idemp_path, args = flags, stdout = TRUE, stderr = TRUE))
 ```
 
-```{r demux}
-# 2015 barcode length is 12 bases. At error rate of 10% (cutadapt default), there is 1 allowed error.
-error_rate_cutadapt <- 0.1
-
-# minimum length to output reads for cutadapt
-minimum_length_cutadapt_1 <- 50
-
-# minimum overlap for "adapter" (barcode) to be detected by cutadapt
-minimum_overlap_cutadapt_1 <- 6
-
-# note: using anchored 5 prime barcodes
-
-# create calls to cutadapt
-flags_cutadapt_1 <- paste("-e", error_rate_cutadapt, "--no-indels", "-m", minimum_length_cutadapt_1, "--overlap", minimum_overlap_cutadapt_1, "-g",  paste0("file:", barcode_path_OM15), "-o", file.path(demultiplex_assigned_path, "{name}_R1.fastq.gz"), "-p", file.path(demultiplex_assigned_path, "{name}_R2.fastq.gz"), "--untrimmed-output", file.path(demultiplex_unassigned_path, "unassigned_R1.fastq.gz"), "--untrimmed-paired-output", file.path(demultiplex_unassigned_path, "unassigned_R2.fastq.gz"), R1_path_OM15, R2_path_OM15)
-
-# run cutdapt and save messages
-cutadapt_messages_1 <- system2(cutadapt_path, args = flags_cutadapt_1, stdout = TRUE, stderr = TRUE)
-
-# print messages
-cutadapt_messages_1 %>% paste(collapse = '\n') %>% cat()
-```
-
-```{r list-demux-files}
+````{r print-demux-output-file-names}
 # Look at output of demultiplexing
 list.files(demultiplex_path)
-```
+````
 
-## Clean up the demultiplexed output
+## Separate assigned and unassigned fastqs for downstream processing
 
-````{r demux-cleanup}
-# Change names of unassignable reads so they are not included in downstream processing
-unassigned_1 <- paste("mv", file.path(demultiplex_path, "unknown_R1.fastq.gz"), file.path(demultiplex_path, "Unassigned_reads1.fastq.gz"))
-                       
-unassigned_2 <- paste("mv", file.path(demultiplex_path, "unknown_R2.fastq.gz"), file.path(demultiplex_path, "Unassigned_reads2.fastq.gz"))
-                       
-system(unassigned_1)
-system(unassigned_2)
+```{r idemp-cleanup}
+# Move idemp demultiplex stats to their own directory
+file.rename(from = list.files(demultiplex_path, pattern = "decode", full.names = TRUE), to =
+            paste0(demultiplex_stats_path, "/", list.files(demultiplex_path, pattern = "decode", full.names = FALSE)))
 
-# Rename files
-# First, generate a vector of desired (shortened) file names
+# Move unassigned reads to their own directory
+file.rename(from = list.files(demultiplex_path, pattern = "unsigned", full.names = TRUE), to =
+            paste0(demultiplex_unassigned_path, "/", list.files(demultiplex_path, pattern = "unsigned", full.names = FALSE)))
 
-# remove text prior to sample name
-R1_names <- gsub(demultiplex_path, "", list.files(demultiplex_path, pattern="R1", full.names = TRUE))
-
-# remove text prior to sample name
-R1_names <- gsub("_R1.fastq.gz", "", R1_names)
-
-# put names back together, appending Illumina naming convention, which is the format for later processing with Figaro
-R1_names <- paste0(R1_names, "_S0_L001_R1_001.fastq.gz")
-
-# Now, rename files
-file.rename(from = list.files(demultiplex_path, pattern="R1", full.names = TRUE), to = file.path(demultiplex_path, R1_names))
-
-
-# Repeat the above with the reverse reads
-
-R2_names <- gsub(demultiplex_path, "", list.files(demultiplex_path, pattern="R2", full.names = TRUE))
-
-R2_names <- gsub("_R2.fastq.gz", "", R2_names)
-
-R2_names <- paste0(R2_names, "_S0_L001_R2_001.fastq.gz")
-
-file.rename(from = list.files(demultiplex_path, pattern="R2", full.names = TRUE), to = file.path(demultiplex_path, R2_names))
-```
+# Move assigned reads to their own directory
+file.rename(from = list.files(demultiplex_path, pattern = "fastq", full.names = TRUE), to = 
+            paste0(demultiplex_assigned_path, "/", list.files(demultiplex_path, pattern = "fastq", full.names = FALSE)))
+````

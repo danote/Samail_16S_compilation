@@ -1,10 +1,10 @@
 sample_id	barcode_sequence	forward_linker_primer_sequence	reverse_primer_sequence	sample_type	nucleic_acid_type	sampling_site	year_sampled	month_sampled	day_sampled	depth_fluid_intake_mbct	notes	sampling_method	upper_packer_inflated	upper_packer_depth_mbct	lower_packer_inflated	lower_packer_depth_mbct	well_depth_mbgl	casing_extent_mbct	casing_height_magl	screened_interval_mbct	depth_to_water_mbct
-WAB55.2015	AACCGATGTACC	NA	NA	groundwater	DNA	WAB55	2015	1	NA	18	NA	"open borehole pumping - Typhoon  submersible, Proactive Env. Products"	NA	NA	NA	NA	102.0	102.0	1.0	8-97	5.76
-NSHQ4.2015	AGGAATACTCAC	NA	NA	groundwater	DNA	NSHQ04	2015	1	NA	22	NA	"open borehole pumping - Typhoon  submersible, Proactive Env. Products"	NA	NA	NA	NA	304.0	5.8	1.0	open below casing	5
-WAB56.2015	ACCGATTAGGTA	NA	NA	groundwater	DNA	WAB56	2016	3	4	50	NA	open borehole pumping - Grundfos submersible	NA	NA	NA	NA	106.0	106.0	1.0	7-27	6.7
-WAB71.2015	TGCAACTTGCAG	NA	NA	groundwater	DNA	WAB71	2016	2	28	50	NA	open borehole pumping - Grundfos submersible	NA	NA	NA	NA	136.5	136.5	1.0	128-131	8.2
-NSHQ21.2015	CCGAGTACAATC	NA	NA	groundwater	DNA	NSHQ21	2015	1	NA	20	NA	"open borehole pumping - Typhoon  submersible, Proactive Env. Products"	NA	NA	NA	NA	233.0	5.4	1.0	open below casing	3.33
-NSHQ3B.2015	TCAAGATCAAGA	NA	NA	groundwater	DNA	NSHQ3B	2015	1	NA	20	NA	"open borehole pumping - Typhoon  submersible, Proactive Env. Products"	NA	NA	NA	NA	472.0	185.0	2.0	91.3-179.74	2.3
-WAB103.2015	CTGTTACAGCGA	NA	NA	groundwater	DNA	WAB103	2015	1	NA	22	NA	"open borehole pumping - Typhoon  submersible, Proactive Env. Products"	NA	NA	NA	NA	101.0	101.0	1.0	90-98	15
-WAB188.2015	AAGTGCTTGGTA	NA	NA	groundwater	DNA	WAB188	2015	1	NA	20	NA	"open borehole pumping - Typhoon  submersible, Proactive Env. Products"	NA	NA	NA	NA	78.0	78.0	1.0	34.5-51	9.2
-NSHQ14.2015	AGTTTGCGAGAT	NA	NA	groundwater	DNA	NSHQ14	2015	1	NA	20	NA	"open borehole pumping - Typhoon  submersible, Proactive Env. Products"	NA	NA	NA	NA	304.0	5.8	1.0	open below casing	10
+WAB55_2015	AACCGATGTACC	NA	NA	groundwater	DNA	WAB55	2015	1	NA	18	NA	"open borehole pumping - Typhoon  submersible, Proactive Env. Products"	NA	NA	NA	NA	102.0	102.0	1.0	8-97	5.76
+NSHQ4_2015	AGGAATACTCAC	NA	NA	groundwater	DNA	NSHQ04	2015	1	NA	22	NA	"open borehole pumping - Typhoon  submersible, Proactive Env. Products"	NA	NA	NA	NA	304.0	5.8	1.0	open below casing	5
+WAB56_2015	ACCGATTAGGTA	NA	NA	groundwater	DNA	WAB56	2015	1	NA	12	NA	"open borehole pumping - Typhoon  submersible, Proactive Env. Products"	NA	NA	NA	NA	106.0	106.0	1.0	7-27	10
+WAB71_2015	TGCAACTTGCAG	NA	NA	groundwater	DNA	WAB71	2015	1	NA	18	NA	"open borehole pumping - Typhoon  submersible, Proactive Env. Products"	NA	NA	NA	NA	136.5	136.5	1.0	128-131	7.8
+NSHQ21_2015	CCGAGTACAATC	NA	NA	groundwater	DNA	NSHQ21	2015	1	NA	20	NA	"open borehole pumping - Typhoon  submersible, Proactive Env. Products"	NA	NA	NA	NA	233.0	5.4	1.0	open below casing	3.33
+NSHQ3B_2015	TCAAGATCAAGA	NA	NA	groundwater	DNA	NSHQ3B	2015	1	NA	20	NA	"open borehole pumping - Typhoon  submersible, Proactive Env. Products"	NA	NA	NA	NA	472.0	185.0	2.0	91.3-179.74	2.3
+WAB103_2015	CTGTTACAGCGA	NA	NA	groundwater	DNA	WAB103	2015	1	NA	22	NA	"open borehole pumping - Typhoon  submersible, Proactive Env. Products"	NA	NA	NA	NA	101.0	101.0	1.0	90-98	15
+WAB188_2015	AAGTGCTTGGTA	NA	NA	groundwater	DNA	WAB188	2015	1	NA	20	NA	"open borehole pumping - Typhoon  submersible, Proactive Env. Products"	NA	NA	NA	NA	78.0	78.0	1.0	34.5-51	9.2
+NSHQ14_2015	AGTTTGCGAGAT	NA	NA	groundwater	DNA	NSHQ14	2015	1	NA	20	NA	"open borehole pumping - Typhoon  submersible, Proactive Env. Products"	NA	NA	NA	NA	304.0	5.8	1.0	open below casing	10

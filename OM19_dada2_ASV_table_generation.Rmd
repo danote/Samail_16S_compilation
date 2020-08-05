@@ -1,6 +1,6 @@
 ---
 title: "DADA2 ASV table generation from 16S rRNA gene sequences of DNA from Oman samples collected in 2019"
-subtitle: "Source file: OM19_ASV_table_generation.Rmd"
+subtitle: "Source file: OM19_dada2_ASV_table_generation.Rmd"
 author: "Daniel Nothaft"
 date: "`r format(Sys.Date(), '%d %b %Y')`"
 output:
@@ -117,6 +117,7 @@ if( length(fnFs) <= 9) {
   plotQualityProfile(fnFs[rand_samples])
 }
 ````
+
 ````{r plot-qual-R2}
 # Reverse reads
 # If the number of samples is 9 or less, plot them all, otherwise, just plot 9 randomly selected samples

@@ -1,4 +1,4 @@
-# Samail Ophiolite 16S rRNA gene amplicon sequencing repository
+# Samail Ophiolite 16S rRNA gene amplicon sequencing
 ## About
 This is a central repository for 16S rRNA gene amplicon sequencing data generated from samples of biomass from the Samail Ophiolite, Oman. The purpose of this repository is to provide a fully documented, reproducible and update-able workflow for processing these data.
 

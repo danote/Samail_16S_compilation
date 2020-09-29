@@ -1,2 +1,20 @@
 type,source_file,source_copy,source_file_hash,doc_file,last_success,last_fail
+RMarkdown,OM14_dada2_ASV_table_generation.Rmd,docs/rmarkdown/OM14_dada2_ASV_table_generation.Rmd,b918eeac9fb1c4a01e15009cf98bfac6,docs/rmarkdown/OM14_dada2_ASV_table_generation.html,2020-09-29 08:27:46 MDT,NA
+RMarkdown,OM14_seq_prep.Rmd,docs/rmarkdown/OM14_seq_prep.Rmd,5c93737ed0162a41fd2f79b50280f821,docs/rmarkdown/OM14_seq_prep.html,2020-09-28 23:44:04 MDT,NA
+RMarkdown,OM14_taxa_assignment.Rmd,docs/rmarkdown/OM14_taxa_assignment.Rmd,e1e5633a28314d19bf91a5d49b135dd2,docs/rmarkdown/OM14_taxa_assignment.html,2020-09-28 23:44:04 MDT,NA
+RMarkdown,OM15_dada2_ASV_table_generation.Rmd,docs/rmarkdown/OM15_dada2_ASV_table_generation.Rmd,24e00b057940281f82ee08e358c9d399,docs/rmarkdown/OM15_dada2_ASV_table_generation.html,2020-09-29 08:27:46 MDT,NA
+RMarkdown,OM15_seq_prep.Rmd,docs/rmarkdown/OM15_seq_prep.Rmd,9cf4a6d3fd8e89c2d0c588cf28bfeabf,docs/rmarkdown/OM15_seq_prep.html,2020-09-28 23:44:04 MDT,NA
+RMarkdown,OM15_taxa_assignment.Rmd,docs/rmarkdown/OM15_taxa_assignment.Rmd,ae410ef8b0c82507c3bccc74f1f0a1a5,docs/rmarkdown/OM15_taxa_assignment.html,2020-09-28 23:44:04 MDT,NA
+RMarkdown,OM16_dada2_ASV_table_generation.Rmd,docs/rmarkdown/OM16_dada2_ASV_table_generation.Rmd,6ca5bf199775d0bf6f34b0a1f935ab73,docs/rmarkdown/OM16_dada2_ASV_table_generation.html,2020-09-29 08:27:46 MDT,NA
+RMarkdown,OM16_seq_prep.Rmd,docs/rmarkdown/OM16_seq_prep.Rmd,8fdeb0ffed8b72255cae10f8a95a6f81,docs/rmarkdown/OM16_seq_prep.html,2020-09-28 23:44:04 MDT,NA
+RMarkdown,OM16_taxa_assignment.Rmd,docs/rmarkdown/OM16_taxa_assignment.Rmd,fc72a7a45ad729d42c0e8d811a46e123,docs/rmarkdown/OM16_taxa_assignment.html,2020-09-28 23:44:04 MDT,NA
+RMarkdown,OM17_dada2_ASV_table_generation.Rmd,docs/rmarkdown/OM17_dada2_ASV_table_generation.Rmd,c8f2f32a8e6a37567da6d9008df1dc5c,docs/rmarkdown/OM17_dada2_ASV_table_generation.html,2020-09-29 08:27:46 MDT,NA
+RMarkdown,OM17_seq_prep.Rmd,docs/rmarkdown/OM17_seq_prep.Rmd,415b6f592a6d350c671dd2b4038884c4,docs/rmarkdown/OM17_seq_prep.html,2020-09-28 23:44:04 MDT,NA
+RMarkdown,OM17_taxa_assignment.Rmd,docs/rmarkdown/OM17_taxa_assignment.Rmd,3a07008aaca18ab095a3ae268d5864cd,docs/rmarkdown/OM17_taxa_assignment.html,2020-09-28 23:44:04 MDT,NA
+RMarkdown,OM18_dada2_ASV_table_generation.Rmd,docs/rmarkdown/OM18_dada2_ASV_table_generation.Rmd,3df356bbd75e3e57f7596908f283082c,docs/rmarkdown/OM18_dada2_ASV_table_generation.html,2020-09-29 08:27:46 MDT,NA
+RMarkdown,OM18_seq_prep.Rmd,docs/rmarkdown/OM18_seq_prep.Rmd,4b93c3774f39f11b9b6721f0361a68a1,docs/rmarkdown/OM18_seq_prep.html,2020-09-28 23:44:04 MDT,NA
+RMarkdown,OM18_taxa_assignment.Rmd,docs/rmarkdown/OM18_taxa_assignment.Rmd,bed80634170b546a5bd9d5ce112255c2,docs/rmarkdown/OM18_taxa_assignment.html,2020-09-28 23:44:04 MDT,NA
+RMarkdown,OM19_dada2_ASV_table_generation.Rmd,docs/rmarkdown/OM19_dada2_ASV_table_generation.Rmd,a714e2a58767d9de754dfb92a1c3f2d9,docs/rmarkdown/OM19_dada2_ASV_table_generation.html,NA,2020-09-29 09:05:20 MDT
 RMarkdown,OM19_taxa_assignment.Rmd,docs/rmarkdown/OM19_taxa_assignment.Rmd,45c463f34e1d784d67f529e2325ac595,docs/rmarkdown/OM19_taxa_assignment.html,2020-08-03 23:32:12 MDT,NA
+RMarkdown,OM19b_dada2_ASV_table_generation.Rmd,docs/rmarkdown/OM19b_dada2_ASV_table_generation.Rmd,4ec8a4307b134c44decc2f6721a12cb9,docs/rmarkdown/OM19b_dada2_ASV_table_generation.html,2020-09-28 23:44:04 MDT,NA
+RMarkdown,OM19b_taxa_assignment.Rmd,docs/rmarkdown/OM19b_taxa_assignment.Rmd,e118196d31e7f7487fd3a901237de62b,docs/rmarkdown/OM19b_taxa_assignment.html,2020-09-29 09:05:20 MDT,NA

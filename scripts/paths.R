@@ -66,3 +66,11 @@ project_path_OM18 <- "/Users/melo.d/Desktop/Research/Oman_fieldwork/Samail_16S_c
 # "/01_preprocess/demultiplexed/assigned", which you must create manually.
 # Set file paths for fastqs
 project_path_OM19 <- "/Users/melo.d/Desktop/Research/Oman_fieldwork/Samail_16S_compilation_fq_outputs/2019"
+
+### 2019b ###
+# Re-sequenced samples from 2019
+# 2019 data were returned from the sequencing facility demultiplexed.
+# So, to reproduce the 2019 data processing, put the demultiplexed fastques in the project path within the directories
+# "/01_preprocess/demultiplexed/assigned", which you must create manually.
+# Set file paths for fastqs
+project_path_OM19b <- "/Users/melo.d/Desktop/Research/Oman_fieldwork/Samail_16S_compilation_fq_outputs/2019b"

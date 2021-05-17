@@ -1,0 +1,74 @@
+---
+---
+---
+title: "16S rRNA gene taxonomic assignment on DNA extracted from samples obtained in Oman in 2019 (re-sequence)"
+subtitle: "Source file: OM19b_taxa_assignment.Rmd"
+author: "Daniel Nothaft"
+date: "`r format(Sys.Date(), '%d %b %Y')`"
+output:
+  html_document: 
+    df_print: paged # omit to disable paged data table output
+    css: stylesheet.css # omit if no need for custom stylesheet
+    number_sections: yes # change to no for unnumbered sections
+    toc: yes # change to no to disable table of contents
+    toc_float: true # change to false to keep toc at the top
+    toc_depth: 3 # change to specify which headings to include in toc
+    code_folding: show # change to hide to hide code by default
+editor_options:
+  chunk_output_type: inline
+---
+
+# Setup
+
+Data processed using the packages [dada2](https://benjjneb.github.io/dada2/index.html) version `r packageVersion("dada2")`.
+
+Following [this tutorial](https://benjjneb.github.io/dada2/tutorial.html)
+
+Load packages
+```{r setup}
+library(dada2); # processing sequence data
+packageVersion("dada2")
+library(tidyverse) # manipulating strings and data frames
+packageVersion("tidyverse")
+
+# global knitting options for automatic saving of all plots as .png and .pdf. Also sets cache directory.
+knitr::opts_chunk$set(
+  dev = c("png", "pdf"), fig.keep = "all",
+  dev.args = list(pdf = list(encoding = "WinAnsi", useDingbats = FALSE)),
+  fig.path = file.path("fig_output/", paste0(gsub("\\.[Rr]md", "/", knitr::current_input()))),
+  cache.path = file.path("cache/", paste0(gsub("\\.[Rr]md", "/", knitr::current_input())))
+)
+```
+
+```{r source}
+# source all relevant scripting files
+# paths.R contains paths to local data and programs
+source(file.path("scripts", "paths.R"))
+```
+
+```{r load-seqtab}
+seqtab_nochim <- read_rds("data_output/seqtab_nochim_OM19b_processed_20200929.rds")
+```
+
+# Assign taxonomy
+It is common at this point, especially in 16S/18S/ITS amplicon sequencing, to assign taxonomy to the sequence variants. The DADA2 package provides a native implementation of the naive Bayesian classifier method for this purpose. The assignTaxonomy function takes as input a set of sequences to be classified and a training set of reference sequences with known taxonomy, and outputs taxonomic assignments with at least minBoot bootstrap confidence.
+
+Here, we use the Silva 138 training set.
+
+Additionally, species are assigned based on exact matching between ASVs and sequenced reference strains.
+```{r assign-taxonomy}
+taxa <- assignTaxonomy(seqtab_nochim, ref_database_path, multithread=TRUE) %>% addSpecies(ref_database_species_path)
+```
+
+
+Let’s inspect the taxonomic assignments:
+```{r inspect-taxa-assignments}
+taxa.print <- taxa # Removing sequence rownames for display only
+rownames(taxa.print) <- NULL
+head(taxa.print)
+```
+
+# Export taxa table
+```{r write-taxtab}
+write_rds(taxa, path = format(Sys.Date(), "data_output/taxa_OM19b_processed_%Y%m%d.rds"), compress = "gz")
+```
